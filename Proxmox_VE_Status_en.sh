@@ -10,12 +10,12 @@
 if [[ -z $(which sensors) || -z $(which iostat) ]]; then
     apt-get update > /dev/null 2>&1
     if [ -z $(which sensors) ]; then
-        echo -e "正在安装 lm-sensors ......"
+        echo -e "Package lm-sensors Install ......"
         apt-get install -y lm-sensors > /dev/null 2>&1
     fi
 
     if [ -z $(which iostat) ]; then
-        echo -e "正在安装 sysstat ......"
+        echo -e "Package sysstat Install ......"
         apt-get install -y sysstat > /dev/null 2>&1
     fi
 fi
@@ -40,7 +40,7 @@ case $cpu_platform in
           cpu_keyword="k10temp-pci-"
           ;;
     *)
-          echo -e "不支持的CPU平台"
+          echo -e "Unsupported CPU Architecture"
           ;;
 esac
 
@@ -59,20 +59,20 @@ cpu_freq_display=',
 	    itemId: '"'"'cpu-frequency'"'"',
 	    colspan: 2,
 	    printBar: false,
-	    title: gettext('"'"'CPU主频'"'"'),
+	    title: gettext('"'"'CPU Frequency'"'"'),
 	    textField: '"'"'cpu_frequency'"'"',
 	    renderer:function(value){
 	        let output = '"'"''"'"';
 	        let cpufreqs = value.matchAll(/^CPU MHz.*?(\d+\.\d+)\\n^CPU max MHz.*?(\d+)\.\d+\\n^CPU min MHz.*?(\d+)\.\d+\\n/gm);
               for (const cpufreq of cpufreqs) {
-                  output += `实时: ${cpufreq[1]} MHz | 最低: ${cpufreq[3]} MHz | 最高: ${cpufreq[2]} MHz\\n`;
+                  output += `Real-time frequency: ${cpufreq[1]} MHz | Min: ${cpufreq[3]} MHz | Max: ${cpufreq[2]} MHz\\n`;
               }
 
 	        let corefreqs = value.match(/^cpu MHz.*?(\d+\.\d+)/gm);
 	        if (corefreqs.length > 0) {
 	            for (i = 1;i < corefreqs.length;) {
 	                for (const corefreq of corefreqs) {
-	                    output += `线程 ${i++}: ${corefreq.match(/(?<=:\s+)(\d+\.\d+)/g)} MHz`;
+	                    output += `Thread ${i++}: ${corefreq.match(/(?<=:\s+)(\d+\.\d+)/g)} MHz`;
 	                    output += '"'"' | '"'"';
 	                    if ((i-1) % 4 == 0){
 	                        output = output.slice(0, -2);
@@ -96,7 +96,7 @@ if [ $CPU = "Intel" ]; then
 	    itemId: '"'"'cpu-temperatures'"'"',
 	    colspan: 2,
 	    printBar: false,
-	    title: gettext('"'"'CPU温度'"'"'),
+	    title: gettext('"'"'CPU Temp'"'"'),
 	    textField: '"'"'cpu_temperatures'"'"',
 	    renderer: function(value) {
 	        value = value.replace(/Â/g, '"'"''"'"');
@@ -132,7 +132,7 @@ if [ $CPU = "Intel" ]; then
 	                output += '"'"'('"'"';
 	                for (j = 1;j < cpu.cores.length;) {
 	                    for (const coreTemp of cpu.cores) {
-	                        output += `核心 ${j++}: ${coreTemp}°C, `;
+	                        output += `Core ${j++}: ${coreTemp}°C, `;
 	                    }
 	                }
 	                output = output.slice(0, -2);
@@ -153,7 +153,7 @@ if [ $CPU = "Intel" ]; then
 
 	                for (const [k, acpitz] of data.entries()) {
 	                    if (acpitz.acpisensors.length > 0) {
-	                        output += '"'"' | 主板: '"'"';
+	                        output += '"'"' | MB: '"'"';
 	                        for (const acpiTemp of acpitz.acpisensors) {
 	                            output += `${acpiTemp}°C, `;
 	                        }
@@ -194,32 +194,32 @@ if [ $CPU = "Intel" ]; then
 
 	                for (const [j, FunState] of data.entries()) {
 	                    if (FunState.cpufans.length > 0 || FunState.pumpfans.length > 0 || FunState.systemfans.length > 0) {
-	                        output += '"'"' | 风扇: '"'"';
+	                        output += '"'"' | Fan: '"'"';
 	                        if (FunState.cpufans.length > 0) {
 	                            output += '"'"'CPU-'"'"';
 	                            for (const cpufan_value of FunState.cpufans) {
-	                                output += `${cpufan_value}转/分钟, `;
+	                                output += `${cpufan_value} RPM, `;
 	                            }
 	                        }
 
 	                        if (FunState.pumpfans.length > 0) {
-	                            output += '"'"'水冷-'"'"';
+	                            output += '"'"'Liquid cooling-'"'"';
 	                            for (const pumpfan_value of FunState.pumpfans) {
-	                                output += `${pumpfan_value}转/分钟, `;
+	                                output += `${pumpfan_value} RPM, `;
 	                            }
 	                        }
 
 	                        if (FunState.systemfans.length > 0) {
 	                            if (FunState.cpufans.length > 0 || FunState.pumpfans.length > 0) {
-	                                output += '"'"'系统-'"'"';
+	                                output += '"'"'Sys-'"'"';
 	                            }
 	                            for (const systemfan_value of FunState.systemfans) {
-	                                output += `${systemfan_value}转/分钟, `;
+	                                output += `${systemfan_value} RPM, `;
 	                            }
 	                        }
 	                        output = output.slice(0, -2);
 	                    } else if (FunState.cpufans.length == 0 && FunState.pumpfans.length == 0 && FunState.systemfans.length == 0) {
-	                        output += '"'"' | 风扇: 停转'"'"';
+	                        output += '"'"' | Fan: Stop'"'"';
 	                    }
 	                }
 	            }
@@ -228,7 +228,7 @@ if [ $CPU = "Intel" ]; then
 	                output += '"'"'\\n'"'"';
 	                for (j = 1;j < cpu.cores.length;) {
 	                    for (const coreTemp of cpu.cores) {
-	                        output += `核心 ${j++}: ${coreTemp}°C`;
+	                        output += `Core ${j++}: ${coreTemp}°C`;
 	                        output += '"'"' | '"'"';
 	                        if ((j-1) % 4 == 0){
 	                            output = output.slice(0, -2);
@@ -249,7 +249,7 @@ elif [ $CPU = "AMD" ]; then
 	    itemId: '"'"'cpu-temperatures'"'"',
 	    colspan: 2,
 	    printBar: false,
-	    title: gettext('"'"'CPU温度'"'"'),
+	    title: gettext('"'"'CPU Temp'"'"'),
 	    textField: '"'"'cpu_temperatures'"'"',
 	    renderer: function(value) {
 	        value = value.replace(/Â/g, '"'"''"'"');
@@ -289,7 +289,7 @@ elif [ $CPU = "AMD" ]; then
 
 	                for (const [k, gpu] of data.entries()) {
 	                    if (gpu.edges.length > 0) {
-	                        output += '"'"' | 核显: '"'"';
+	                        output += '"'"' | Integrated Graphics: '"'"';
 	                        for (const edgeTemp of gpu.edges) {
 	                            output += `${edgeTemp}°C, `;
 	                        }
@@ -330,32 +330,32 @@ elif [ $CPU = "AMD" ]; then
 
 	                for (const [j, FunState] of data.entries()) {
 	                    if (FunState.cpufans.length > 0 || FunState.pumpfans.length > 0 || FunState.systemfans.length > 0) {
-	                        output += '"'"' | 风扇: '"'"';
+	                        output += '"'"' | Fan: '"'"';
 	                        if (FunState.cpufans.length > 0) {
 	                            output += '"'"'CPU-'"'"';
 	                            for (const cpufan_value of FunState.cpufans) {
-	                                output += `${cpufan_value}转/分钟, `;
+	                                output += `${cpufan_value} RPM, `;
 	                            }
 	                        }
 
 	                        if (FunState.pumpfans.length > 0) {
-	                            output += '"'"'水冷-'"'"';
+	                            output += '"'"'Liquid cooling-'"'"';
 	                            for (const pumpfan_value of FunState.pumpfans) {
-	                                output += `${pumpfan_value}转/分钟, `;
+	                                output += `${pumpfan_value} RPM, `;
 	                            }
 	                        }
 
 	                        if (FunState.systemfans.length > 0) {
 	                            if (FunState.cpufans.length > 0 || FunState.pumpfans.length > 0) {
-	                                output += '"'"'系统-'"'"';
+	                                output += '"'"'Sys-'"'"';
 	                            }
 	                            for (const systemfan_value of FunState.systemfans) {
-	                                output += `${systemfan_value}转/分钟, `;
+	                                output += `${systemfan_value} RPM, `;
 	                            }
 	                        }
 	                        output = output.slice(0, -2);
 	                    } else if (FunState.cpufans.length == 0 && FunState.pumpfans.length == 0 && FunState.systemfans.length == 0) {
-	                        output += '"'"' | 风扇: 停转'"'"';
+	                        output += '"'"' | Fan: Stop'"'"';
 	                    }
 	                }
 	            }
@@ -393,7 +393,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	    itemId: '"'"''$nvme_code'-status'"'"',
 	    colspan: 2,
 	    printBar: false,
-	    title: gettext('"'"'NVME硬盘 '$i''"'"'),
+	    title: gettext('"'"'NVMe SSD '$i''"'"'),
 	    textField: '"'"''$nvme_code'_status'"'"',
 	    renderer:function(value){
 	        if (value.length > 0) {
@@ -491,7 +491,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (nvme.Integrity_Errors.length > 0) {
 	                        for (const nvmeIntegrity_Error of nvme.Integrity_Errors) {
 	                            if (nvmeIntegrity_Error != 0) {
-	                                output += ` (0E: ${nvmeIntegrity_Error}-故障！)`;
+	                                output += ` (0E: ${nvmeIntegrity_Error}-Error！)`;
 	                            }
 								break
 	                        }
@@ -500,19 +500,19 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (nvme.Capacitys.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const nvmeCapacity of nvme.Capacitys) {
-	                            output += `容量: ${nvmeCapacity.replace(/ |,/gm, '"'"''"'"')}`;
+	                            output += `Capacity: ${nvmeCapacity.replace(/ |,/gm, '"'"''"'"')}`;
 	                        }
 	                    }
 
 	                    if (nvme.Useds.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const nvmeUsed of nvme.Useds) {
-				    output += `损耗寿命: ${nvmeUsed}% `;
-	                            output += `剩余寿命: ${100 - nvmeUsed}% `;
+				    output += `TBW used: ${nvmeUsed}% `;
+	                            output += `Remain TBW: ${100 - nvmeUsed}% `;
 	                            if (nvme.Reads.length > 0) {
 	                                output += '"'"'('"'"';
 	                                for (const nvmeRead of nvme.Reads) {
-	                                    output += `已读${nvmeRead.replace(/ |,/gm, '"'"''"'"')}`;
+	                                    output += `Read ${nvmeRead.replace(/ |,/gm, '"'"''"'"')}`;
 	                                    output += '"'"')'"'"';
 	                                }
 	                            }
@@ -521,7 +521,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                                output = output.slice(0, -1);
 	                                output += '"'"', '"'"';
 	                                for (const nvmeWritten of nvme.Writtens) {
-	                                    output += `已写${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
+	                                    output += `Writen ${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                                output += '"'"')'"'"';
 	                            }
@@ -532,20 +532,20 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (nvme.Cycles.length > 0) {
 	                            output += '"'"' | '"'"';
 	                            for (const nvmeCycle of nvme.Cycles) {
-	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                output += `Power-on Count: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (nvme.Shutdowns.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const nvmeShutdown of nvme.Shutdowns) {
-	                                    output += `不安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                    output += `Unsafe power-offs: ${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                            }
 
 	                            if (nvme.Hours.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const nvmeHour of nvme.Hours) {
-	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                    output += `Uptime: ${nvmeHour.replace(/ |,/gm, '"'"''"'"')} Hours`;
 	                                }
 	                            }
 	                        }
@@ -554,7 +554,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (nvme.Temperatures.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const nvmeTemperature of nvme.Temperatures) {
-	                            output += `温度: ${nvmeTemperature}°C`;
+	                            output += `Temp: ${nvmeTemperature}°C`;
 	                        }
 	                    }
 
@@ -562,20 +562,20 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (nvme.Cycles.length > 0) {
 	                            output += '"'"'\\n'"'"';
 	                            for (const nvmeCycle of nvme.Cycles) {
-	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                output += `Power-on Count: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (nvme.Shutdowns.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const nvmeShutdown of nvme.Shutdowns) {
-	                                    output += `不安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                    output += `Unsafe power-offs: ${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                            }
 
 	                            if (nvme.Hours.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const nvmeHour of nvme.Hours) {
-	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                    output += `Uptime:${nvmeHour.replace(/ |,/gm, '"'"''"'"')} Hours`;
 	                                }
 	                            }
 	                        }
@@ -583,21 +583,21 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        output += '"'"' | '"'"';
 	                        if (nvme.r_awaits.length > 0) {
 	                            for (const nvme_r_await of nvme.r_awaits) {
-	                                output += `I/O: 读延迟${nvme_r_await}ms`;
+	                                output += `I/O: Read latency: ${nvme_r_await}ms`;
 	                            }
 	                        }
 
 	                        if (nvme.w_awaits.length > 0) {
 	                            output += '"'"', '"'"';
 	                            for (const nvme_w_await of nvme.w_awaits) {
-	                                output += `写延迟${nvme_w_await}ms`;
+	                                output += `Write latency: ${nvme_w_await}ms`;
 	                            }
 	                        }
 
 	                        if (nvme.utils.length > 0) {
 	                            output += '"'"', '"'"';
 	                            for (const nvme_util of nvme.utils) {
-	                                output += `负载${nvme_util}%`;
+	                                output += `Load: ${nvme_util}%`;
 	                            }
 	                        }
 	                    }
@@ -606,7 +606,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                return output.replace(/\\n/g, '"'"'<br>'"'"');
 	            }
 	        } else { 
-	            return `提示: 未安装硬盘或已直通硬盘控制器！`;
+	            return `Note: Hard drive not installed or hard drive controller is passed through.`;
 	        }
 	    }
 	}'
@@ -642,7 +642,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	    itemId: '"'"''$hdd_code'-status'"'"',
 	    colspan: 2,
 	    printBar: false,
-	    title: gettext('"'"'其他存储设备 '$i''"'"'),
+	    title: gettext('"'"'Other storage devices '$i''"'"'),
 	    textField: '"'"''$hdd_code'_status'"'"',
 	    renderer:function(value){
 	        if (value.length > 0) {
@@ -725,7 +725,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                            output += '"'"' | '"'"';
                           }
 	                        for (const deviceCapacity of device.Capacitys) {
-	                            output += `容量: ${deviceCapacity.replace(/ |,/gm, '"'"''"'"')}`;
+	                            output += `Capacity: ${deviceCapacity.replace(/ |,/gm, '"'"''"'"')}`;
 	                        }
 	                    }
 
@@ -733,20 +733,20 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (device.Cycles.length > 0) {
 	                            output += '"'"' | '"'"';
 	                            for (const deviceCycle of device.Cycles) {
-	                                output += `通电: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                output += `Power-on Count: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (device.Shutdowns.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const deviceShutdown of device.Shutdowns) {
-	                                    output += `不安全断电${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                    output += `Unsafe power-offs:${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                            }
 
 	                            if (device.Hours.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const deviceHour of device.Hours) {
-	                                    output += `累计${deviceHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                    output += `Uptime:${deviceHour.replace(/ |,/gm, '"'"''"'"')} Hours`;
 	                                }
 	                            }
 	                        }
@@ -758,21 +758,21 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 
 	                            if (device.r_awaits.length > 0) {
 	                                for (const device_r_await of device.r_awaits) {
-	                                    output += `I/O: 读延迟${device_r_await}ms`;
+	                                    output += `I/O: Read latency: ${device_r_await}ms`;
 	                                }
 	                            }
 
 	                            if (device.w_awaits.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_w_await of device.w_awaits) {
-	                                    output += `写延迟${device_w_await}ms`;
+	                                    output += `Write latency: ${device_w_await}ms`;
 	                                }
 	                            }
 
 	                            if (device.utils.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_util of device.utils) {
-	                                    output += `负载${device_util}%`;
+	                                    output += `Load:${device_util}%`;
 	                                }
 	                            }
 	                        }
@@ -781,7 +781,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (device.Temperatures.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const deviceTemperature of device.Temperatures) {
-	                            output += `温度: ${deviceTemperature}°C`;
+	                            output += `Temp: ${deviceTemperature}°C`;
                                 break
 	                        }
 	                    }
@@ -790,20 +790,20 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (device.Cycles.length > 0) {
 	                            output += '"'"'\\n'"'"';
 	                            for (const deviceCycle of device.Cycles) {
-	                                output += `通电: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                output += `Power-on Count: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (device.Shutdowns.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const deviceShutdown of device.Shutdowns) {
-	                                    output += `不安全断电${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                    output += `Unsafe power-offs:${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                            }
 
 	                            if (device.Hours.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const deviceHour of device.Hours) {
-	                                    output += `累计${deviceHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                    output += `Uptime:${deviceHour.replace(/ |,/gm, '"'"''"'"')} Hours`;
 	                                }
 	                            }
 
@@ -813,21 +813,21 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 
 	                            if (device.r_awaits.length > 0) {
 	                                for (const device_r_await of device.r_awaits) {
-	                                    output += `I/O: 读延迟${device_r_await}ms`;
+	                                    output += `I/O: Read latency:  ${device_r_await}ms`;
 	                                }
 	                            }
 
 	                            if (device.w_awaits.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_w_await of device.w_awaits) {
-	                                    output += `写延迟${device_w_await}ms`;
+	                                    output += `Write latency: ${device_w_await}ms`;
 	                                }
 	                            }
 
 	                            if (device.utils.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_util of device.utils) {
-	                                    output += `负载${device_util}%`;
+	                                    output += `Load:${device_util}%`;
 	                                }
 	                            }
 	                        }
@@ -837,7 +837,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                return output.replace(/\\n/g, '"'"'<br>'"'"');
 	            }
 	        } else { 
-	            return `提示: 未安装存储设备或已直通存储设备控制器！`;
+	            return `Note: Hard drive not installed or directly passed through to hard drive controller.`;
 	        }
 	    }
 	}'
@@ -879,7 +879,7 @@ if [ $height2 -le 325 ]; then
 fi
 
 # 重装 pve-manager
-# echo -e "正在恢复默认 pve-manager ......"
+# echo -e "Restoring pve-manager ......"
 # apt-get update > /dev/null 2>&1
 # apt-get reinstall pve-manager > /dev/null 2>&1
 # sed -i '/PVE::pvecfg::version_text();/,/my $dinfo = df/!b;//!d;s/my $dinfo = df/\n\t&/' /usr/share/perl5/PVE/API2/Nodes.pm
@@ -896,8 +896,8 @@ sed -i '/pveversion/,/^\s\+],/!b;//!d;/^\s\+],/e cat /tmp/3.txt' /usr/share/pve-
 sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
 
 # 完善汉化信息
-sed -i '/'"'"'netin'"'"', '"'"'netout'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'下行'"'"'), gettext('"'"'上行'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
-sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'读'"'"'), gettext('"'"'写'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
+# sed -i '/'"'"'netin'"'"', '"'"'netout'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'下行'"'"'), gettext('"'"'上行'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
+# sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'读'"'"'), gettext('"'"'写'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
 
 # 去除订阅提示
 sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
@@ -912,17 +912,14 @@ fi
 
 PVE_NO_SUBSCRIPTION_SOURCE="${APT_SOURCES_LIST}/pve-no-subscription.list"
 if [ ! -f $PVE_NO_SUBSCRIPTION_SOURCE ]; then
-    # 增加PVE内核官方源(对大多数人可能会体验糟糕)
+    # 增加PVE内核官方源
     # echo "deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
-
-    # 尝试使用清华源加快安装速度
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/proxmox/debian/pve bullseye pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
     # 记得更新下索引
     apt update
 fi
 
-echo -e "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ......"
+echo -e "Adding PVE hardware summary information completed, restarting pveproxy service ......"
 systemctl restart pveproxy
 
-echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
+echo -e "pveproxy service restart completed, please manually refresh the PVE web page using Shift + F5."
 
