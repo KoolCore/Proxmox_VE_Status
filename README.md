@@ -1,5 +1,11 @@
 <hr>
 
+
+![](https://github.com/KoolCore/Proxmox_VE_Status/blob/main/Proxmox_VE_Status.png)
+
+
+
+
 #### 一、安装方法：
 
 > 注意:需要使用`root`身份执行下面代码，以下代码在Proxmox VE网页后台的Shell下运行（默认是root用户了）
