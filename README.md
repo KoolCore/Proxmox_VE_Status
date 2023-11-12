@@ -25,12 +25,6 @@
    git clone https://github.com/KoolCore/Proxmox_VE_Status.git
    ```
 
-   或<br>
-
-   ```
-   wget https://github.com/KoolCore/Proxmox_VE_Status
-   ```
-
 4. 进入脚本命令行所在目录并执行脚本;
 
    ```
