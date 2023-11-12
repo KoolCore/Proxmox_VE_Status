@@ -22,13 +22,13 @@
 3. 执行脚本，开始添加信息面板；
 
    ```
-   git clone https://github.com/iKoolCore/Proxmox_VE_Status.git
+   git clone https://github.com/KoolCore/Proxmox_VE_Status.git
    ```
 
    或<br>
 
    ```
-   wget https://github.com/iKoolCore/Proxmox_VE_Status
+   wget https://github.com/KoolCore/Proxmox_VE_Status
    ```
 
 4. 进入脚本命令行所在目录并执行脚本;
