@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 
-## Build 20231113
+## Build 20231112
 
 #"/usr/share/perl5/PVE/API2/Nodes.pm"
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
 # 检查并安装工具包
-install_package() {
-    local package=$1
-    if [ -z "$(which $package)" ]; then
-        echo "Installing $package ..."
-        apt-get install -y $package > /dev/null 2>&1
+if [[ -z $(which sensors) || -z $(which iostat) ]]; then
+    apt-get update > /dev/null 2>&1
+    if [ -z $(which sensors) ]; then
+        echo -e "正在安装 lm-sensors ......"
+        apt-get install -y lm-sensors > /dev/null 2>&1
     fi
-}
 
-# Check and install required packages
-install_package "sensors"
-install_package "iostat"
-
+    if [ -z $(which iostat) ]; then
+        echo -e "正在安装 sysstat ......"
+        apt-get install -y sysstat > /dev/null 2>&1
+    fi
+fi
 
 # 设定工具权限
 if [ -n $(which sensors) ]; then
@@ -365,47 +365,65 @@ elif [ $CPU = "AMD" ]; then
 	    }
 	}'
 fi
-# NVME 硬盘信息 API 及 Web UI
-nvme_height=0
 
+# NVME 硬盘信息 API 及 Web UI
+nvme_height="0"
 if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
-    i=1
+    i="1"
     nvme_info_api=''
     nvme_info_display=''
-    
     for nvme_device in $(ls -1 /dev/nvme?); do
         nvme_code=${nvme_device##*/}
-        
-        if smartctl -a "$nvme_device" | grep -E "Cycle" && iostat -d -x -k 1 1 | grep -E "^$nvme_code" && (smartctl -a "$nvme_device" | grep -E "Model" || smartctl -a "$nvme_device" | grep -E "Capacity"); then
-            nvme_degree=2
-        else
-            nvme_degree=1
-        fi
+	    if [[ $(smartctl -a $nvme_device|grep -E "Cycle") && $(iostat -d -x -k 1 1 | grep -E "^$nvme_code") ]] && [[ $(smartctl -a $nvme_device|grep -E "Model") || $(smartctl -a $nvme_device|grep -E "Capacity") ]]; then
+	        nvme_degree="2"
+	    else
+	        nvme_degree="1"
+	    fi
+        nvme_tmp_height="$[nvme_degree*17+7]"
+		nvme_height="$[nvme_height + nvme_tmp_height]"
+        nvme_info_api_tmp='
+	my $'$nvme_code'_temperatures = `smartctl -a '$nvme_device'|grep -E "Model Number|Total NVM Capacity|Temperature:|Percentage|Data Unit|Power Cycles|Power On Hours|Unsafe Shutdowns|Integrity Errors"`;
+	my $'$nvme_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$nvme_code'"`;
+	$res->{'$nvme_code'_status} = $'$nvme_code'_temperatures . $'$nvme_code'_io;
+		'
+    nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
 
-        nvme_tmp_height=$((nvme_degree * 17 + 7))
-        nvme_height=$((nvme_height + nvme_tmp_height))
+    nvme_info_display_tmp=',
+	{
+	    itemId: '"'"''$nvme_code'-status'"'"',
+	    colspan: 2,
+	    printBar: false,
+	    title: gettext('"'"'NVMe硬盘 '$i''"'"'),
+	    textField: '"'"''$nvme_code'_status'"'"',
+	    renderer:function(value){
+	        if (value.length > 0) {
+	            value = value.replace(/Â/g, '"'"''"'"');
+	            let data = [];
+	            let nvmes = value.matchAll(/(^(?:Model|Total|Temperature:|Percentage|Data|Power|Unsafe|Integrity Errors|nvme)[\s\S]*)+/gm);
+	            for (const nvme of nvmes) {
+	                let nvmeNumber = 0;
+	                data[nvmeNumber] = {
+	                       Models: [],
+						   Integrity_Errors: [],
+	                       Capacitys: [],
+	                       Temperatures: [],
+	                       Useds: [],
+	                       Reads: [],
+	                       Writtens: [],
+	                       Cycles: [],
+	                       Hours: [],
+	                       Shutdowns: [],
+	                       States: [],
+	                       r_awaits: [],
+	                       w_awaits: [],
+	                       utils: []
+	                };
 
-        nvme_info_api_tmp="
-            my \$$nvme_code\_temperatures = \`smartctl -a $nvme_device | grep -E \"Model Number|Total NVM Capacity|Temperature:|Percentage|Data Unit|Power Cycles|Power On Hours|Unsafe Shutdowns|Integrity Errors\"\`;
-            my \$$nvme_code\_io = \`iostat -d -x -k 1 1 | grep -E \"^$nvme_code\"\`;
-            \$res->{'$nvme_code\_status'} = \$$nvme_code\_temperatures . \$$nvme_code\_io;
-        "
-        nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
+	                let Models = nvme[1].matchAll(/^Model Number: *([ \S]*)$/gm);
+	                for (const Model of Models) {
+	                    data[nvmeNumber]['"'"'Models'"'"'].push(Model[1]);
+	                }
 
-<<<<<<< HEAD
-        nvme_info_display_tmp="
-            {
-                itemId: '$nvme_code-status',
-                colspan: 2,
-                printBar: false,
-                title: gettext('NVMe硬盘 $i'),
-                textField: '$nvme_code\_status',
-                renderer: function (value) {
-                    // Your existing renderer logic here
-                }
-            },
-        "
-=======
 	                let Integrity_Errors = nvme[1].matchAll(/^Media and Data Integrity Errors: *([ \S]*)$/gm);
 	                for (const Integrity_Error of Integrity_Errors) {
 	                    data[nvmeNumber]['"'"'Integrity_Errors'"'"'].push(Integrity_Error[1]);
@@ -489,8 +507,8 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (nvme.Useds.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const nvmeUsed of nvme.Useds) {
-				    output += `已用TBW: ${nvmeUsed}% `;
-	                            output += `剩余TBW: ${100 - nvmeUsed}% `;
+				    output += `已用寿命: ${nvmeUsed}% `;
+	                            output += `剩余寿命: ${100 - nvmeUsed}% `;
 	                            if (nvme.Reads.length > 0) {
 	                                output += '"'"'('"'"';
 	                                for (const nvmeRead of nvme.Reads) {
@@ -592,51 +610,237 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	        }
 	    }
 	}'
->>>>>>> parent of 6f6d55d (Fix error)
         nvme_info_display="$nvme_info_display$nvme_info_display_tmp"
         i=$((i + 1))
     done
 fi
 
 # 其他存储设备信息 API 及 Web UI
-hdd_height=0
-
+hdd_height="0"
 if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
-    i=1
+    i="1"
     hdd_info_api=''
     hdd_info_display=''
-
     for hdd_device in $(ls -1 /dev/sd?); do
         hdd_code=${hdd_device##*/}
+	    if [[ $(smartctl -a $hdd_device|grep -E "Cycle") && $(iostat -d -x -k 1 1 | grep -E "^$hdd_code") ]] && [[ $(smartctl -a $hdd_device|grep -E "Model") || $(smartctl -a $hdd_device|grep -E "Capacity") ]]; then
+	        hdd_degree="2"
+	    else
+	        hdd_degree="1"
+	    fi
+		hdd_tmp_height="$[hdd_degree*17+7]"
+		hdd_height="$[hdd_height + hdd_tmp_height]"
+        hdd_info_api_tmp='
+	my $'$hdd_code'_temperatures = `smartctl -a '$hdd_device'|grep -E "Model|Capacity|Power_On_Hours|Power_Cycle_Count|Power-Off_Retract_Count|Unexpected_Power_Loss|Unexpect_Power_Loss_Ct|POR_Recovery|Temperature"`;
+	my $'$hdd_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$hdd_code'"`;
+	$res->{'$hdd_code'_status} = $'$hdd_code'_temperatures . $'$hdd_code'_io;
+		'
+    hdd_info_api="$hdd_info_api$hdd_info_api_tmp"
 
-        if smartctl -a "$hdd_device" | grep -E "Cycle" && iostat -d -x -k 1 1 | grep -E "^$hdd_code" && (smartctl -a "$hdd_device" | grep -E "Model" || smartctl -a "$hdd_device" | grep -E "Capacity"); then
-            hdd_degree=2
-        else
-            hdd_degree=1
-        fi
+    hdd_info_display_tmp=',
+	{
+	    itemId: '"'"''$hdd_code'-status'"'"',
+	    colspan: 2,
+	    printBar: false,
+	    title: gettext('"'"'其他存储介质 '$i''"'"'),
+	    textField: '"'"''$hdd_code'_status'"'"',
+	    renderer:function(value){
+	        if (value.length > 0) {
+	            value = value.replace(/Â/g, '"'"''"'"');
+	            let data = [];
+	            let devices = value.matchAll(/^((?:Device|Model|User|[ ]{0,2}\d|sd)[\s\S]*)+/gm);
+	            for (const device of devices) {
+	                let deviceNumber = 0;
+	                data[deviceNumber] = {
+	                       Models: [],
+	                       Capacitys: [],
+	                       Temperatures: [],
+	                       Cycles: [],
+	                       Hours: [],
+	                       Shutdowns: [],
+	                       States: [],
+	                       r_awaits: [],
+	                       w_awaits: [],
+	                       utils: []
+	                };
 
-        hdd_tmp_height=$((hdd_degree * 17 + 7))
-        hdd_height=$((hdd_height + hdd_tmp_height))
+	                if(device[1].indexOf("Family") !== -1){
+	                    let Models = device[1].matchAll(/^Model Family: *([ \S]*?)\\n^Device Model: *([ \S]*?)$/gm);
+	                    for (const Model of Models) {
+	                        data[deviceNumber]['"'"'Models'"'"'].push(`${Model[1]} - ${Model[2]}`);
+	                    }
+	                } else {
+	                    let Models = device[1].matchAll(/Model: *([ \S]*?)$/gm);
+	                    for (const Model of Models) {
+	                        data[deviceNumber]['"'"'Models'"'"'].push(Model[1]);
+	                    }
+	                }
 
-        hdd_info_api_tmp="
-            my \$$hdd_code\_temperatures = \`smartctl -a $hdd_device | grep -E \"Model|Capacity|Power_On_Hours|Power_Cycle_Count|Power-Off_Retract_Count|Unexpected_Power_Loss|Unexpect_Power_Loss_Ct|POR_Recovery|Temperature\"\`;
-            my \$$hdd_code\_io = \`iostat -d -x -k 1 1 | grep -E \"^$hdd_code\"\`;
-            \$res->{'$hdd_code\_status'} = \$$hdd_code\_temperatures . \$$hdd_code\_io;
-        "
-        hdd_info_api="$hdd_info_api$hdd_info_api_tmp"
+	                let Capacitys = device[1].matchAll(/^User Capacity:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Capacity of Capacitys) {
+	                    data[deviceNumber]['"'"'Capacitys'"'"'].push(Capacity[1]);
+	                }
 
-        hdd_info_display_tmp="
-            {
-                itemId: '$hdd_code-status',
-                colspan: 2,
-                printBar: false,
-                title: gettext('其他存储介质 $i'),
-                textField: '$hdd_code\_status',
-                renderer: function (value) {
-                    // Your existing renderer logic here
-                }
-            },
-        "
+	                let Temperatures = device[1].matchAll(/Temperature[ \S]*(?:\-|In_the_past) *?(\d+)[ \S]*$/gm);
+	                for (const Temperature of Temperatures) {
+	                    data[deviceNumber]['"'"'Temperatures'"'"'].push(Temperature[1]);
+	                }
+
+	                let Cycles = device[1].matchAll(/Cycle[ \S]*(?:\-|In_the_past) *?(\d+)[ \S]*$/gm);
+	                for (const Cycle of Cycles) {
+	                    data[deviceNumber]['"'"'Cycles'"'"'].push(Cycle[1]);
+	                }
+
+	                let Hours = device[1].matchAll(/Hours[ \S]*(?:\-|In_the_past) *?(\d+)[ \S]*$/gm);
+	                for (const Hour of Hours) {
+	                    data[deviceNumber]['"'"'Hours'"'"'].push(Hour[1]);
+	                }
+
+	                let Shutdowns = device[1].matchAll(/(?:Retract|Loss|POR_Recovery)[ \S]*(?:\-|In_the_past) *?(\d+)[ \S]*$/gm);
+	                for (const Shutdown of Shutdowns) {
+	                    data[deviceNumber]['"'"'Shutdowns'"'"'].push(Shutdown[1]);
+	                }
+
+	                let States = device[1].matchAll(/^sd\S+(( *\d+\.\d{2}){22})/gm);
+	                for (const State of States) {
+	                    data[deviceNumber]['"'"'States'"'"'].push(State[1]);
+	                    const IO_array = [...State[1].matchAll(/\d+\.\d{2}/g)];
+	                    if (IO_array.length > 0) {
+	                        data[deviceNumber]['"'"'r_awaits'"'"'].push(IO_array[4]);
+	                        data[deviceNumber]['"'"'w_awaits'"'"'].push(IO_array[10]);
+	                        data[deviceNumber]['"'"'utils'"'"'].push(IO_array[21]);
+	                    }
+	                }
+
+	                let output = '"'"''"'"';
+	                for (const [i, device] of data.entries()) {
+	                    if (device.Models.length > 0) {
+	                        for (const deviceModel of device.Models) {
+	                            output += `${deviceModel}`;
+	                        }
+	                    }
+
+	                    if (device.Capacitys.length > 0) {
+	                        if (device.Models.length > 0) {
+	                            output += '"'"' | '"'"';
+                          }
+	                        for (const deviceCapacity of device.Capacitys) {
+	                            output += `容量: ${deviceCapacity.replace(/ |,/gm, '"'"''"'"')}`;
+	                        }
+	                    }
+
+	                    if (device.States.length <= 0) {
+	                        if (device.Cycles.length > 0) {
+	                            output += '"'"' | '"'"';
+	                            for (const deviceCycle of device.Cycles) {
+	                                output += `通电: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (device.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const deviceShutdown of device.Shutdowns) {
+	                                    output += `非安全断电${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (device.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const deviceHour of device.Hours) {
+	                                    output += `累计${deviceHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+	                        }
+	                    } else if (device.Cycles.length <= 0) {
+	                        if (device.States.length > 0) {
+	                            if (device.Models.length > 0 || device.Capacitys.length > 0) {
+	                                output += '"'"' | '"'"';
+	                            }
+
+	                            if (device.r_awaits.length > 0) {
+	                                for (const device_r_await of device.r_awaits) {
+	                                    output += `I/O: 读延迟${device_r_await}ms`;
+	                                }
+	                            }
+
+	                            if (device.w_awaits.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const device_w_await of device.w_awaits) {
+	                                    output += `写延迟${device_w_await}ms`;
+	                                }
+	                            }
+
+	                            if (device.utils.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const device_util of device.utils) {
+	                                    output += `负载${device_util}%`;
+	                                }
+	                            }
+	                        }
+	                    }
+
+	                    if (device.Temperatures.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const deviceTemperature of device.Temperatures) {
+	                            output += `温度: ${deviceTemperature}°C`;
+                                break
+	                        }
+	                    }
+
+	                    if (device.States.length > 0) {
+	                        if (device.Cycles.length > 0) {
+	                            output += '"'"'\\n'"'"';
+	                            for (const deviceCycle of device.Cycles) {
+	                                output += `通电: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (device.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const deviceShutdown of device.Shutdowns) {
+	                                    output += `非安全断电${deviceShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (device.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const deviceHour of device.Hours) {
+	                                    output += `累计${deviceHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+
+	                            if (device.Models.length > 0 || device.Capacitys.length > 0) {
+	                                output += '"'"' | '"'"';
+	                            }
+
+	                            if (device.r_awaits.length > 0) {
+	                                for (const device_r_await of device.r_awaits) {
+	                                    output += `I/O: 读延迟${device_r_await}ms`;
+	                                }
+	                            }
+
+	                            if (device.w_awaits.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const device_w_await of device.w_awaits) {
+	                                    output += `写延迟${device_w_await}ms`;
+	                                }
+	                            }
+
+	                            if (device.utils.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const device_util of device.utils) {
+	                                    output += `负载${device_util}%`;
+	                                }
+	                            }
+	                        }
+	                    }
+	                    //output = output.slice(0, -3);
+	                }
+	                return output.replace(/\\n/g, '"'"'<br>'"'"');
+	            }
+	        } else { 
+	            return `提示: 未安装存储设备或已直通存储设备控制器！`;
+	        }
+	    }
+	}'
         hdd_info_display="$hdd_info_display$hdd_info_display_tmp"
         i=$((i + 1))
     done
@@ -715,11 +919,10 @@ if [ ! -f $PVE_NO_SUBSCRIPTION_SOURCE ]; then
     apt update
 fi
 
-echo -e "尝试解决PVE下PCIe设备名称显示不全的问题......"
+echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
 echo -e "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ......"
 systemctl restart pveproxy
 
 echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
-
