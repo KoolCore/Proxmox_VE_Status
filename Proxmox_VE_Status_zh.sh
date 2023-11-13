@@ -913,7 +913,7 @@ fi
 PVE_NO_SUBSCRIPTION_SOURCE="${APT_SOURCES_LIST}/pve-no-subscription.list"
 if [ ! -f $PVE_NO_SUBSCRIPTION_SOURCE ]; then
     # 增加PVE内核官方源
-    # echo "deb http://download.proxmox.com/debian/pve bbookworm pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
+    # echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
 
     # 记得更新下索引
     apt update
