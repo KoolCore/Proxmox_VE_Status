@@ -507,8 +507,8 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                    if (nvme.Useds.length > 0) {
 	                        output += '"'"' | '"'"';
 	                        for (const nvmeUsed of nvme.Useds) {
-				    output += `Terabytes Written used: ${nvmeUsed}% `;
-	                            output += `Terabytes Written remaining: ${100 - nvmeUsed}% `;
+				    output += `TBW used: ${nvmeUsed}% `;
+	                            output += `Remain TBW: ${100 - nvmeUsed}% `;
 	                            if (nvme.Reads.length > 0) {
 	                                output += '"'"'('"'"';
 	                                for (const nvmeRead of nvme.Reads) {
@@ -521,7 +521,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                                output = output.slice(0, -1);
 	                                output += '"'"', '"'"';
 	                                for (const nvmeWritten of nvme.Writtens) {
-	                                    output += `Written ${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
+	                                    output += `Writen ${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
 	                                }
 	                                output += '"'"')'"'"';
 	                            }
@@ -532,7 +532,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (nvme.Cycles.length > 0) {
 	                            output += '"'"' | '"'"';
 	                            for (const nvmeCycle of nvme.Cycles) {
-	                                output += `Power-on Counts: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
+	                                output += `Power-on Count: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (nvme.Shutdowns.length > 0) {
@@ -562,7 +562,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (nvme.Cycles.length > 0) {
 	                            output += '"'"'\\n'"'"';
 	                            for (const nvmeCycle of nvme.Cycles) {
-	                                output += `Power-on Counts: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
+	                                output += `Power-on Count: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (nvme.Shutdowns.length > 0) {
@@ -597,7 +597,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (nvme.utils.length > 0) {
 	                            output += '"'"', '"'"';
 	                            for (const nvme_util of nvme.utils) {
-	                                output += `Loads: ${nvme_util}%`;
+	                                output += `Load: ${nvme_util}%`;
 	                            }
 	                        }
 	                    }
@@ -733,7 +733,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (device.Cycles.length > 0) {
 	                            output += '"'"' | '"'"';
 	                            for (const deviceCycle of device.Cycles) {
-	                                output += `Power-on Counts: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
+	                                output += `Power-on Count: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (device.Shutdowns.length > 0) {
@@ -772,7 +772,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                            if (device.utils.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_util of device.utils) {
-	                                    output += `Loads:${device_util}%`;
+	                                    output += `Load:${device_util}%`;
 	                                }
 	                            }
 	                        }
@@ -790,7 +790,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                        if (device.Cycles.length > 0) {
 	                            output += '"'"'\\n'"'"';
 	                            for (const deviceCycle of device.Cycles) {
-	                                output += `Power-on Counts: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
+	                                output += `Power-on Count: ${deviceCycle.replace(/ |,/gm, '"'"''"'"')}`;
 	                            }
 
 	                            if (device.Shutdowns.length > 0) {
@@ -827,7 +827,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                            if (device.utils.length > 0) {
 	                                output += '"'"', '"'"';
 	                                for (const device_util of device.utils) {
-	                                    output += `Loads:${device_util}%`;
+	                                    output += `Load:${device_util}%`;
 	                                }
 	                            }
 	                        }

@@ -392,6 +392,7 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
         "
         nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
 
+<<<<<<< HEAD
         nvme_info_display_tmp="
             {
                 itemId: '$nvme_code-status',
@@ -404,6 +405,194 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
                 }
             },
         "
+=======
+	                let Integrity_Errors = nvme[1].matchAll(/^Media and Data Integrity Errors: *([ \S]*)$/gm);
+	                for (const Integrity_Error of Integrity_Errors) {
+	                    data[nvmeNumber]['"'"'Integrity_Errors'"'"'].push(Integrity_Error[1]);
+	                }
+
+	                let Capacitys = nvme[1].matchAll(/^Total NVM Capacity:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Capacity of Capacitys) {
+	                    data[nvmeNumber]['"'"'Capacitys'"'"'].push(Capacity[1]);
+	                }
+
+	                let Temperatures = nvme[1].matchAll(/^Temperature: *([\d]*)[ \S]*$/gm);
+	                for (const Temperature of Temperatures) {
+	                    data[nvmeNumber]['"'"'Temperatures'"'"'].push(Temperature[1]);
+	                }
+
+	                let Useds = nvme[1].matchAll(/^Percentage Used: *([ \S]*)%$/gm);
+	                for (const Used of Useds) {
+	                    data[nvmeNumber]['"'"'Useds'"'"'].push(Used[1]);
+	                }
+
+	                let Reads = nvme[1].matchAll(/^Data Units Read:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Read of Reads) {
+	                    data[nvmeNumber]['"'"'Reads'"'"'].push(Read[1]);
+	                }
+
+	                let Writtens = nvme[1].matchAll(/^Data Units Written:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Written of Writtens) {
+	                    data[nvmeNumber]['"'"'Writtens'"'"'].push(Written[1]);
+	                }
+
+	                let Cycles = nvme[1].matchAll(/^Power Cycles: *([ \S]*)$/gm);
+	                for (const Cycle of Cycles) {
+	                    data[nvmeNumber]['"'"'Cycles'"'"'].push(Cycle[1]);
+	                }
+
+	                let Hours = nvme[1].matchAll(/^Power On Hours: *([ \S]*)$/gm);
+	                for (const Hour of Hours) {
+	                    data[nvmeNumber]['"'"'Hours'"'"'].push(Hour[1]);
+	                }
+
+	                let Shutdowns = nvme[1].matchAll(/^Unsafe Shutdowns: *([ \S]*)$/gm);
+	                for (const Shutdown of Shutdowns) {
+	                    data[nvmeNumber]['"'"'Shutdowns'"'"'].push(Shutdown[1]);
+	                }
+
+	                let States = nvme[1].matchAll(/^nvme\S+(( *\d+\.\d{2}){22})/gm);
+	                for (const State of States) {
+	                    data[nvmeNumber]['"'"'States'"'"'].push(State[1]);
+	                    const IO_array = [...State[1].matchAll(/\d+\.\d{2}/g)];
+	                    if (IO_array.length > 0) {
+	                        data[nvmeNumber]['"'"'r_awaits'"'"'].push(IO_array[4]);
+	                        data[nvmeNumber]['"'"'w_awaits'"'"'].push(IO_array[10]);
+	                        data[nvmeNumber]['"'"'utils'"'"'].push(IO_array[21]);
+	                    }
+	                }
+
+	                let output = '"'"''"'"';
+	                for (const [i, nvme] of data.entries()) {
+	                    if (nvme.Models.length > 0) {
+	                        for (const nvmeModel of nvme.Models) {
+	                            output += `${nvmeModel}`;
+	                        }
+	                    }
+
+	                    if (nvme.Integrity_Errors.length > 0) {
+	                        for (const nvmeIntegrity_Error of nvme.Integrity_Errors) {
+	                            if (nvmeIntegrity_Error != 0) {
+	                                output += ` (0E: ${nvmeIntegrity_Error}-故障！)`;
+	                            }
+								break
+	                        }
+	                    }
+
+	                    if (nvme.Capacitys.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeCapacity of nvme.Capacitys) {
+	                            output += `容量: ${nvmeCapacity.replace(/ |,/gm, '"'"''"'"')}`;
+	                        }
+	                    }
+
+	                    if (nvme.Useds.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeUsed of nvme.Useds) {
+				    output += `已用TBW: ${nvmeUsed}% `;
+	                            output += `剩余TBW: ${100 - nvmeUsed}% `;
+	                            if (nvme.Reads.length > 0) {
+	                                output += '"'"'('"'"';
+	                                for (const nvmeRead of nvme.Reads) {
+	                                    output += `已读${nvmeRead.replace(/ |,/gm, '"'"''"'"')}`;
+	                                    output += '"'"')'"'"';
+	                                }
+	                            }
+
+	                            if (nvme.Writtens.length > 0) {
+	                                output = output.slice(0, -1);
+	                                output += '"'"', '"'"';
+	                                for (const nvmeWritten of nvme.Writtens) {
+	                                    output += `已写${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
+	                                }
+	                                output += '"'"')'"'"';
+	                            }
+	                        }
+	                    }
+
+	                    if (nvme.States.length <= 0) {
+	                        if (nvme.Cycles.length > 0) {
+	                            output += '"'"' | '"'"';
+	                            for (const nvmeCycle of nvme.Cycles) {
+	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (nvme.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeShutdown of nvme.Shutdowns) {
+	                                    output += `非安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (nvme.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeHour of nvme.Hours) {
+	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+	                        }
+	                    }
+
+	                    if (nvme.Temperatures.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeTemperature of nvme.Temperatures) {
+	                            output += `温度: ${nvmeTemperature}°C`;
+	                        }
+	                    }
+
+	                    if (nvme.States.length > 0) {
+	                        if (nvme.Cycles.length > 0) {
+	                            output += '"'"'\\n'"'"';
+	                            for (const nvmeCycle of nvme.Cycles) {
+	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (nvme.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeShutdown of nvme.Shutdowns) {
+	                                    output += `非安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (nvme.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeHour of nvme.Hours) {
+	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+	                        }
+
+	                        output += '"'"' | '"'"';
+	                        if (nvme.r_awaits.length > 0) {
+	                            for (const nvme_r_await of nvme.r_awaits) {
+	                                output += `I/O: 读延迟${nvme_r_await}ms`;
+	                            }
+	                        }
+
+	                        if (nvme.w_awaits.length > 0) {
+	                            output += '"'"', '"'"';
+	                            for (const nvme_w_await of nvme.w_awaits) {
+	                                output += `写延迟${nvme_w_await}ms`;
+	                            }
+	                        }
+
+	                        if (nvme.utils.length > 0) {
+	                            output += '"'"', '"'"';
+	                            for (const nvme_util of nvme.utils) {
+	                                output += `负载${nvme_util}%`;
+	                            }
+	                        }
+	                    }
+	                    //output = output.slice(0, -3);
+	                }
+	                return output.replace(/\\n/g, '"'"'<br>'"'"');
+	            }
+	        } else { 
+	            return `提示: 未安装硬盘或已直通硬盘控制器！`;
+	        }
+	    }
+	}'
+>>>>>>> parent of 6f6d55d (Fix error)
         nvme_info_display="$nvme_info_display$nvme_info_display_tmp"
         i=$((i + 1))
     done
