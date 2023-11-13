@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Build 20231112
+## Build 20231113
 
 #"/usr/share/perl5/PVE/API2/Nodes.pm"
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
@@ -913,10 +913,51 @@ fi
 PVE_NO_SUBSCRIPTION_SOURCE="${APT_SOURCES_LIST}/pve-no-subscription.list"
 if [ ! -f $PVE_NO_SUBSCRIPTION_SOURCE ]; then
     # 增加PVE内核官方源
-    # echo "deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
+    # echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
     # 记得更新下索引
     apt update
 fi
+
+echo -e "Attempting to resolve the issue of incomplete PCIe device names display under PVE..."
+update-pciids
+
+# 获取 CPU 型号
+cpu_vendor=$(lscpu | grep "Vendor ID" | awk '{print $3}')
+
+# 判断 CPU 型号并设置相应的参数
+if [ "$cpu_vendor" == "GenuineIntel" ]; then
+    echo "Detected Intel CPU."
+    # 如果是 Intel CPU
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt"/' /etc/default/grub
+elif [ "$cpu_vendor" == "AuthenticAMD" ]; then
+    echo "Detected AMD CPU."
+    # 如果是 AMD CPU
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt"/' /etc/default/grub
+    # 如果需要显卡直通，添加额外的参数
+    # sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt video=vesafb:off video=efifb:off video=simplefb:off"/' /etc/default/grub
+else
+    echo "Unsupported CPU vendor: $cpu_vendor"
+    exit 1
+fi
+
+# 更新 grub
+echo "Updating GRUB..."
+update-grub
+
+# 加载内核模块
+echo "Loading kernel modules..."
+echo "vfio" >> /etc/modules
+echo "vfio_iommu_type1" >> /etc/modules
+echo "vfio_pci" >> /etc/modules
+echo "vfio_virqfd" >> /etc/modules
+
+# 更新内核参数
+echo "Updating kernel parameters..."
+update-initramfs -k all -u
+
+echo "Script completed successfully."
+
+
 
 echo -e "Adding PVE hardware summary information completed, restarting pveproxy service ......"
 systemctl restart pveproxy
