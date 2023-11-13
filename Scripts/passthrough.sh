@@ -39,3 +39,6 @@ echo "更新内核参数..."
 update-initramfs -k all -u
 
 echo "脚本运行完成，已成功在本机开启硬件直通功能."
+
+echo "正在执行重启指令...请耐心等待1-3分钟机器重启成功..."
+reboot
