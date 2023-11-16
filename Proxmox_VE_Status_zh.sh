@@ -40,7 +40,7 @@ case $cpu_platform in
           cpu_keyword="k10temp-pci-"
           ;;
     *)
-          echo -e "抱歉，暂不支持当前CPU平台"
+          echo -e "抱歉,暂不支持当前CPU平台"
           ;;
 esac
 
@@ -837,7 +837,7 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                return output.replace(/\\n/g, '"'"'<br>'"'"');
 	            }
 	        } else { 
-	            return `提示: 未安装存储设备或已直通存储设备控制器！`;
+	            return `⚠警告: 未安装存储设备或已直通存储设备控制器！`;
 	        }
 	    }
 	}'

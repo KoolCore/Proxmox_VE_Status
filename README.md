@@ -52,6 +52,19 @@ systemctl restart pveproxy
 
 
 
+#### 三、硬件直通
+
+> 在执行硬件直通代码之前，需要确认自己的小主机是否支持VT-D功能（IO虚拟化）。
+
+运行下面代码即可开启硬件直通，适用于 Intel 和 AMD 平台。
+
+```shell
+cd Proxmox_VE_Status
+bash ./passthrough.sh
+```
+
+
+
 <hr>
 
 #### Section 1: Installation Instructions:
@@ -96,5 +109,18 @@ sed -i '/PVE::pvecfg::version_text();/,/my $dinfo = df/!b;//!d;s/my $dinfo = df/
 sed -i '/pveversion/,/^\s\+],/!b;//!d;s/^\s\+],/\t    value: '"'"''"'"',\n\t},\n&/' /usr/share/pve-manager/js/pvemanagerlib.js
 sed -i '/widget.pveNodeStatus/,/},/ { s/height: [0-9]\+/height: 300/; /textAlign/d}' /usr/share/pve-manager/js/pvemanagerlib.js
 systemctl restart pveproxy
+```
+
+
+
+#### Section 3: Hardware Passthrough:
+
+> Before executing the hardware passthrough code, you need to confirm that your mini-host supports VT-D function (IO virtualization).
+
+Run the following code to enable hardware passthrough, which is suitable for Intel and AMD platforms.
+
+```shell
+cd Proxmox_VE_Status
+bash ./passthrough.sh
 ```
 
