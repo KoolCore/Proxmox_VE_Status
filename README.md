@@ -5,40 +5,43 @@
 
 
 
+### 一、安装方法：
+> 注意:需要使用root身份执行下面代码，以下代码在Proxmox VE网页后台的Shell下运行（默认是root用户了）
 
-#### 一、安装方法：
 
-> 注意:需要使用`root`身份执行下面代码，以下代码在Proxmox VE网页后台的Shell下运行（默认是root用户了）
+1. 更新当前Proxmox VE软件包：
+```
+export LC_ALL=en_US.UTF-8
+apt update && apt upgrade -y
+```
 
-1. 更新当前Proxmox VE软件包；
+2. 安装git和wget服务：
+```
+apt install git wget 
+```
 
-   ```shell
-   export LC_ALL=en_US.UTF-8
-   apt update && apt upgrade -y
-   ```
+3. git拉取脚本：
+```
+git clone https://github.com/KoolCore/Proxmox_VE_Status.git
+```
 
-   
+4. 进入脚本命令行所在目录：
+```
+cd Proxmox_VE_Status
+```
 
-2. 安装git和wget服务；
+5. 执行脚本
+```
+bash ./Proxmox_VE_Status_zh.sh
+```
 
-   ```shell
-   apt install -y wget git
-   ```
-
-3. git拉取脚本；
-
-   ```shell
-   git clone https://github.com/KoolCore/Proxmox_VE_Status.git
-   ```
-
-4. 进入脚本命令行所在目录并执行脚本;
-
-   ```shell
-   cd Proxmox_VE_Status
-   bash ./Proxmox_VE_Status_zh.sh
-   ```
+6. 执行硬件直通脚本：
+```
+bash ./passthrough.sh
+```
 
 大概1-3分钟后，按下`CTRL+F5`强制刷新本页面即可。如果发现 `curl: (7) Failed to connect to raw.githubusercontent.com port 443: Connection refused` 这种错误，年轻人，你的网络运营商屏蔽了 GitHub。请自行处理网络环境问题。
+
 
 #### 二、还原方法：
 
