@@ -55,75 +55,55 @@ systemctl restart pveproxy
 
 
 
-#### 三、硬件直通
-
-> 在执行硬件直通代码之前，需要确认自己的小主机是否支持VT-D功能（IO虚拟化）。
-
-运行下面代码即可开启硬件直通，适用于 Intel 和 AMD 平台。
-
-```shell
-cd Proxmox_VE_Status
-bash ./passthrough.sh
-```
-
 
 
 <hr>
 
-#### Section 1: Installation Instructions:
+#### Installation
+> Note: You need to run the following codes as root. The codes below are run in the Shell of Proxmox VE web UI (root user by default).
 
-> Note: Execute the following code with `root` privileges. The code below should be run in the Shell of the Proxmox VE web interface (default user is root).
+1. Update the current Proxmox VE packages:
+```
+export LC_ALL=en_US.UTF-8
+apt update && apt upgrade -y
+```
 
-1. Update the current Proxmox VE packages;
+2. Install git and wget services:
+```
+apt install git wget
+```
 
-   ```shell
-   export LC_ALL=en_US.UTF-8
-   apt update && apt upgrade -y
+3. Clone the script with git:
+```
+git clone https://github.com/KoolCore/Proxmox_VE_Status.git
+```
 
-2. Install the git and wget services;
+4. Go to the directory where the script is located:
 
-   ```shell
-   apt install -y wget git
-   ```
+```
+cd Proxmox_VE_Status
+```
 
-3. Download the script with git;
+5. Run the script:
+```
+bash ./Proxmox_VE_Status_zh.sh
+```
 
-   ```shell
-   git clone https://github.com/KoolCore/Proxmox_VE_Status.git
-   ```
+6. Run the passthrough script:
 
-4. Navigate to the directory containing the script and execute it;
+```
+bash ./passthrough.sh
+```
 
-   ```shell
-   cd Proxmox_VE_Status
-   bash ./Proxmox_VE_Status_en.sh
-   ```
+After about 1-3 minutes, press CTRL+F5 to force refresh the page. If you encounter an error like `curl: (7) Failed to connect to raw.githubusercontent.com port 443: Connection refused`, Please resolve network environment issues yourself.
 
-After approximately 1-3 minutes, press `CTRL+F5` to force-refresh this page. If you encounter an error like `curl: (7) Failed to connect to raw.githubusercontent.com port 443: Connection refused`, your network service provider might be blocking GitHub. Please resolve any network environment issues on your own.
+#### Restore
+Run the following four commands (applicable to the summary information that has been changed, restore to the default summary information):
 
-
-
-#### Section 2: Restoration Method:
-
-Run the following four commands (applicable if you have modified the summary information and want to restore it to the default):
-
-```shell
+```
+Shell
 sed -i '/PVE::pvecfg::version_text();/,/my $dinfo = df/!b;//!d;s/my $dinfo = df/\n\t&/' /usr/share/perl5/PVE/API2/Nodes.pm
 sed -i '/pveversion/,/^\s\+],/!b;//!d;s/^\s\+],/\t    value: '"'"''"'"',\n\t},\n&/' /usr/share/pve-manager/js/pvemanagerlib.js
 sed -i '/widget.pveNodeStatus/,/},/ { s/height: [0-9]\+/height: 300/; /textAlign/d}' /usr/share/pve-manager/js/pvemanagerlib.js
 systemctl restart pveproxy
 ```
-
-
-
-#### Section 3: Hardware Passthrough:
-
-> Before executing the hardware passthrough code, you need to confirm that your mini-host supports VT-D function (IO virtualization).
-
-Run the following code to enable hardware passthrough, which is suitable for Intel and AMD platforms.
-
-```shell
-cd Proxmox_VE_Status
-bash ./passthrough.sh
-```
-
