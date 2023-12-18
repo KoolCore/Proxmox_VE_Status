@@ -25,7 +25,7 @@
    apt install -y wget git
    ```
 
-3. 执行脚本，开始添加信息面板；
+3. git拉取脚本；
 
    ```shell
    git clone https://github.com/KoolCore/Proxmox_VE_Status.git
@@ -83,7 +83,7 @@ bash ./passthrough.sh
    apt install -y wget git
    ```
 
-3. Execute the script to begin adding the information panel;
+3. Download the script with git;
 
    ```shell
    git clone https://github.com/KoolCore/Proxmox_VE_Status.git
