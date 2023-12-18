@@ -86,7 +86,7 @@ cd Proxmox_VE_Status
 
 5. Run the script:
 ```
-bash ./Proxmox_VE_Status_zh.sh
+bash ./Proxmox_VE_Status_en.sh
 ```
 
 6. Run the passthrough script:
