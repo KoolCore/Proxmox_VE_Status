@@ -374,138 +374,242 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
     nvme_info_display=''
     for nvme_device in $(ls -1 /dev/nvme?); do
         nvme_code=${nvme_device##*/}
-        # 简化条件判断
-        if smartctl -a $nvme_device | grep -qE "Cycle|Model|Capacity" && iostat -d -x -k 1 1 | grep -qE "^$nvme_code"; then
-            nvme_degree="2"
-        else
-            nvme_degree="1"
-        fi
+	    if [[ $(smartctl -a $nvme_device|grep -E "Cycle") && $(iostat -d -x -k 1 1 | grep -E "^$nvme_code") ]] && [[ $(smartctl -a $nvme_device|grep -E "Model") || $(smartctl -a $nvme_device|grep -E "Capacity") ]]; then
+	        nvme_degree="2"
+	    else
+	        nvme_degree="1"
+	    fi
         nvme_tmp_height="$[nvme_degree*17+7]"
-        nvme_height="$[nvme_height + nvme_tmp_height]"
-        
-        # 修改API部分，每次请求时重新获取数据
+		nvme_height="$[nvme_height + nvme_tmp_height]"
         nvme_info_api_tmp='
-        my $'$nvme_code'_smart = `smartctl -a '$nvme_device'`;
-        my $'$nvme_code'_temperatures = `echo "$'$nvme_code'_smart" | grep -E "Model Number|Total NVM Capacity|Temperature:|Percentage|Data Unit|Power Cycles|Power On Hours|Unsafe Shutdowns|Integrity Errors"`;
-        my $'$nvme_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$nvme_code'"`;
-        $res->{'$nvme_code'_status} = $'$nvme_code'_temperatures . $'$nvme_code'_io;
-        '
-        nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
+	my $'$nvme_code'_temperatures = `smartctl -a '$nvme_device'|grep -E "Model Number|Total NVM Capacity|Temperature:|Percentage|Data Unit|Power Cycles|Power On Hours|Unsafe Shutdowns|Integrity Errors"`;
+	my $'$nvme_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$nvme_code'"`;
+	$res->{'$nvme_code'_status} = $'$nvme_code'_temperatures . $'$nvme_code'_io;
+		'
+    nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
 
-        # 优化显示部分
-        nvme_info_display_tmp=',
-        {
-            itemId: '"'"''$nvme_code'-status'"'"',
-            colspan: 2,
-            printBar: false,
-            title: gettext('"'"'NVMe硬盘 '$i''"'"'),
-            textField: '"'"''$nvme_code'_status'"'"',
-            renderer: function(value) {
-                if (!value || value.length === 0) {
-                    return "提示: 未安装硬盘或已直通硬盘控制器！";
-                }
+    nvme_info_display_tmp=',
+	{
+	    itemId: '"'"''$nvme_code'-status'"'"',
+	    colspan: 2,
+	    printBar: false,
+	    title: gettext('"'"'NVMe硬盘 '$i''"'"'),
+	    textField: '"'"''$nvme_code'_status'"'"',
+	    renderer:function(value){
+	        if (value.length > 0) {
+	            value = value.replace(/Â/g, '"'"''"'"');
+	            let data = [];
+	            let nvmes = value.matchAll(/(^(?:Model|Total|Temperature:|Percentage|Data|Power|Unsafe|Integrity Errors|nvme)[\s\S]*)+/gm);
+	            for (const nvme of nvmes) {
+	                let nvmeNumber = 0;
+	                data[nvmeNumber] = {
+	                       Models: [],
+						   Integrity_Errors: [],
+	                       Capacitys: [],
+	                       Temperatures: [],
+	                       Useds: [],
+	                       Reads: [],
+	                       Writtens: [],
+	                       Cycles: [],
+	                       Hours: [],
+	                       Shutdowns: [],
+	                       States: [],
+	                       r_awaits: [],
+	                       w_awaits: [],
+	                       utils: []
+	                };
 
-                value = value.replace(/Â/g, "");
-                const data = {
-                    Models: [],
-                    Integrity_Errors: [],
-                    Capacitys: [],
-                    Temperatures: [],
-                    Useds: [],
-                    Reads: [],
-                    Writtens: [],
-                    Cycles: [],
-                    Hours: [],
-                    Shutdowns: [],
-                    States: [],
-                    r_awaits: [],
-                    w_awaits: [],
-                    utils: []
-                };
+	                let Models = nvme[1].matchAll(/^Model Number: *([ \S]*)$/gm);
+	                for (const Model of Models) {
+	                    data[nvmeNumber]['"'"'Models'"'"'].push(Model[1]);
+	                }
 
-                // 使用更简洁的正则提取数据
-                const extractData = (pattern, text, target) => {
-                    const matches = text.matchAll(pattern);
-                    for (const match of matches) {
-                        data[target].push(match[1].trim());
-                    }
-                };
+	                let Integrity_Errors = nvme[1].matchAll(/^Media and Data Integrity Errors: *([ \S]*)$/gm);
+	                for (const Integrity_Error of Integrity_Errors) {
+	                    data[nvmeNumber]['"'"'Integrity_Errors'"'"'].push(Integrity_Error[1]);
+	                }
 
-                // 提取各项数据
-                extractData(/^Model Number: *([ \S]*)$/gm, value, "Models");
-                extractData(/^Media and Data Integrity Errors: *([ \S]*)$/gm, value, "Integrity_Errors");
-                extractData(/^Total NVM Capacity:[^\[]*\[([ \S]*)\]$/gm, value, "Capacitys");
-                extractData(/^Temperature: *([\d]*)[ \S]*$/gm, value, "Temperatures");
-                extractData(/^Percentage Used: *([ \S]*)%$/gm, value, "Useds");
-                extractData(/^Data Units Read:[^\[]*\[([ \S]*)\]$/gm, value, "Reads");
-                extractData(/^Data Units Written:[^\[]*\[([ \S]*)\]$/gm, value, "Writtens");
-                extractData(/^Power Cycles: *([ \S]*)$/gm, value, "Cycles");
-                extractData(/^Power On Hours: *([ \S]*)$/gm, value, "Hours");
-                extractData(/^Unsafe Shutdowns: *([ \S]*)$/gm, value, "Shutdowns");
+	                let Capacitys = nvme[1].matchAll(/^Total NVM Capacity:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Capacity of Capacitys) {
+	                    data[nvmeNumber]['"'"'Capacitys'"'"'].push(Capacity[1]);
+	                }
 
-                // 提取IO状态
-                const stateMatch = value.match(/^nvme\S+(( *\d+\.\d{2}){22})/m);
-                if (stateMatch) {
-                    const ioValues = stateMatch[1].match(/\d+\.\d{2}/g);
-                    if (ioValues) {
-                        data.r_awaits.push(ioValues[4]);
-                        data.w_awaits.push(ioValues[10]);
-                        data.utils.push(ioValues[21]);
-                    }
-                }
+	                let Temperatures = nvme[1].matchAll(/^Temperature: *([\d]*)[ \S]*$/gm);
+	                for (const Temperature of Temperatures) {
+	                    data[nvmeNumber]['"'"'Temperatures'"'"'].push(Temperature[1]);
+	                }
 
-                // 构建输出
-                const parts = [];
-                
-                // 基本信息
-                if (data.Models[0]) {
-                    parts.push(data.Models[0]);
-                }
+	                let Useds = nvme[1].matchAll(/^Percentage Used: *([ \S]*)%$/gm);
+	                for (const Used of Useds) {
+	                    data[nvmeNumber]['"'"'Useds'"'"'].push(Used[1]);
+	                }
 
-                // 完整性错误
-                if (data.Integrity_Errors[0] && data.Integrity_Errors[0] !== "0") {
-                    parts.push(`(0E: ${data.Integrity_Errors[0]}-故障！)`);
-                }
+	                let Reads = nvme[1].matchAll(/^Data Units Read:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Read of Reads) {
+	                    data[nvmeNumber]['"'"'Reads'"'"'].push(Read[1]);
+	                }
 
-                // 容量信息
-                if (data.Capacitys[0]) {
-                    parts.push(`容量: ${data.Capacitys[0].replace(/ |,/g, "")}`);
-                }
+	                let Writtens = nvme[1].matchAll(/^Data Units Written:[^\[]*\[([ \S]*)\]$/gm);
+	                for (const Written of Writtens) {
+	                    data[nvmeNumber]['"'"'Writtens'"'"'].push(Written[1]);
+	                }
 
-                // 使用寿命
-                if (data.Useds[0]) {
-                    const used = parseInt(data.Useds[0]);
-                    parts.push(`已用寿命: ${used}% 剩余寿命: ${100 - used}% ${
-                        data.Reads[0] ? `(已读${data.Reads[0].replace(/ |,/g, "")}, ` : ""
-                    }${
-                        data.Writtens[0] ? `已写${data.Writtens[0].replace(/ |,/g, "")})` : ""
-                    }`);
-                }
+	                let Cycles = nvme[1].matchAll(/^Power Cycles: *([ \S]*)$/gm);
+	                for (const Cycle of Cycles) {
+	                    data[nvmeNumber]['"'"'Cycles'"'"'].push(Cycle[1]);
+	                }
 
-                // 运行状态
-                const runStatus = [];
-                if (data.Cycles[0]) runStatus.push(`通电: ${data.Cycles[0].replace(/ |,/g, "")}次`);
-                if (data.Shutdowns[0]) runStatus.push(`非安全断电${data.Shutdowns[0].replace(/ |,/g, "")}次`);
-                if (data.Hours[0]) runStatus.push(`累计${data.Hours[0].replace(/ |,/g, "")}小时`);
-                if (runStatus.length) parts.push(runStatus.join(", "));
+	                let Hours = nvme[1].matchAll(/^Power On Hours: *([ \S]*)$/gm);
+	                for (const Hour of Hours) {
+	                    data[nvmeNumber]['"'"'Hours'"'"'].push(Hour[1]);
+	                }
 
-                // 温度信息
-                if (data.Temperatures[0]) {
-                    parts.push(`温度: ${data.Temperatures[0]}°C`);
-                }
+	                let Shutdowns = nvme[1].matchAll(/^Unsafe Shutdowns: *([ \S]*)$/gm);
+	                for (const Shutdown of Shutdowns) {
+	                    data[nvmeNumber]['"'"'Shutdowns'"'"'].push(Shutdown[1]);
+	                }
 
-                // IO状态
-                if (data.r_awaits[0] || data.w_awaits[0] || data.utils[0]) {
-                    const ioStatus = [];
-                    if (data.r_awaits[0]) ioStatus.push(`读延迟${data.r_awaits[0]}ms`);
-                    if (data.w_awaits[0]) ioStatus.push(`写延迟${data.w_awaits[0]}ms`);
-                    if (data.utils[0]) ioStatus.push(`负载${data.utils[0]}%`);
-                    parts.push(`I/O: ${ioStatus.join(", ")}`);
-                }
+	                let States = nvme[1].matchAll(/^nvme\S+(( *\d+\.\d{2}){22})/gm);
+	                for (const State of States) {
+	                    data[nvmeNumber]['"'"'States'"'"'].push(State[1]);
+	                    const IO_array = [...State[1].matchAll(/\d+\.\d{2}/g)];
+	                    if (IO_array.length > 0) {
+	                        data[nvmeNumber]['"'"'r_awaits'"'"'].push(IO_array[4]);
+	                        data[nvmeNumber]['"'"'w_awaits'"'"'].push(IO_array[10]);
+	                        data[nvmeNumber]['"'"'utils'"'"'].push(IO_array[21]);
+	                    }
+	                }
 
-                return parts.join(" | ").replace(/\\n/g, "<br>");
-            }
-        }'
+	                let output = '"'"''"'"';
+	                for (const [i, nvme] of data.entries()) {
+	                    if (nvme.Models.length > 0) {
+	                        for (const nvmeModel of nvme.Models) {
+	                            output += `${nvmeModel}`;
+	                        }
+	                    }
+
+	                    if (nvme.Integrity_Errors.length > 0) {
+	                        for (const nvmeIntegrity_Error of nvme.Integrity_Errors) {
+	                            if (nvmeIntegrity_Error != 0) {
+	                                output += ` (0E: ${nvmeIntegrity_Error}-故障！)`;
+	                            }
+								break
+	                        }
+	                    }
+
+	                    if (nvme.Capacitys.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeCapacity of nvme.Capacitys) {
+	                            output += `容量: ${nvmeCapacity.replace(/ |,/gm, '"'"''"'"')}`;
+	                        }
+	                    }
+
+	                    if (nvme.Useds.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeUsed of nvme.Useds) {
+				    output += `已用寿命: ${nvmeUsed}% `;
+	                            output += `剩余寿命: ${100 - nvmeUsed}% `;
+	                            if (nvme.Reads.length > 0) {
+	                                output += '"'"'('"'"';
+	                                for (const nvmeRead of nvme.Reads) {
+	                                    output += `已读${nvmeRead.replace(/ |,/gm, '"'"''"'"')}`;
+	                                    output += '"'"')'"'"';
+	                                }
+	                            }
+
+	                            if (nvme.Writtens.length > 0) {
+	                                output = output.slice(0, -1);
+	                                output += '"'"', '"'"';
+	                                for (const nvmeWritten of nvme.Writtens) {
+	                                    output += `已写${nvmeWritten.replace(/ |,/gm, '"'"''"'"')}`;
+	                                }
+	                                output += '"'"')'"'"';
+	                            }
+	                        }
+	                    }
+
+	                    if (nvme.States.length <= 0) {
+	                        if (nvme.Cycles.length > 0) {
+	                            output += '"'"' | '"'"';
+	                            for (const nvmeCycle of nvme.Cycles) {
+	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (nvme.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeShutdown of nvme.Shutdowns) {
+	                                    output += `非安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (nvme.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeHour of nvme.Hours) {
+	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+	                        }
+	                    }
+
+	                    if (nvme.Temperatures.length > 0) {
+	                        output += '"'"' | '"'"';
+	                        for (const nvmeTemperature of nvme.Temperatures) {
+	                            output += `温度: ${nvmeTemperature}°C`;
+	                        }
+	                    }
+
+	                    if (nvme.States.length > 0) {
+	                        if (nvme.Cycles.length > 0) {
+	                            output += '"'"'\\n'"'"';
+	                            for (const nvmeCycle of nvme.Cycles) {
+	                                output += `通电: ${nvmeCycle.replace(/ |,/gm, '"'"''"'"')}次`;
+	                            }
+
+	                            if (nvme.Shutdowns.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeShutdown of nvme.Shutdowns) {
+	                                    output += `非安全断电${nvmeShutdown.replace(/ |,/gm, '"'"''"'"')}次`;
+	                                }
+	                            }
+
+	                            if (nvme.Hours.length > 0) {
+	                                output += '"'"', '"'"';
+	                                for (const nvmeHour of nvme.Hours) {
+	                                    output += `累计${nvmeHour.replace(/ |,/gm, '"'"''"'"')}小时`;
+	                                }
+	                            }
+	                        }
+
+	                        output += '"'"' | '"'"';
+	                        if (nvme.r_awaits.length > 0) {
+	                            for (const nvme_r_await of nvme.r_awaits) {
+	                                output += `I/O: 读延迟${nvme_r_await}ms`;
+	                            }
+	                        }
+
+	                        if (nvme.w_awaits.length > 0) {
+	                            output += '"'"', '"'"';
+	                            for (const nvme_w_await of nvme.w_awaits) {
+	                                output += `写延迟${nvme_w_await}ms`;
+	                            }
+	                        }
+
+	                        if (nvme.utils.length > 0) {
+	                            output += '"'"', '"'"';
+	                            for (const nvme_util of nvme.utils) {
+	                                output += `负载${nvme_util}%`;
+	                            }
+	                        }
+	                    }
+	                    //output = output.slice(0, -3);
+	                }
+	                return output.replace(/\\n/g, '"'"'<br>'"'"');
+	            }
+	        } else { 
+	            return `提示: 未安装硬盘或已直通硬盘控制器！`;
+	        }
+	    }
+	}'
         nvme_info_display="$nvme_info_display$nvme_info_display_tmp"
         i=$((i + 1))
     done
