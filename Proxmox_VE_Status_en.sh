@@ -999,32 +999,6 @@ systemctl restart pveproxy
 
 echo -e "pveproxy service restart completed, please use Shift + F5 to manually refresh the PVE Web page."
 
-# Apply configuration changes
-apply_configuration_changes() {
-    # Modify info box Web UI height
-    sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
-
-    # Complete localization information
-    sed -i '/'"'"'netin'"'"', '"'"'netout'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'Download'"'"'), gettext('"'"'Upload'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
-    sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'Read'"'"'), gettext('"'"'Write'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
-
-    # Remove subscription prompt
-    sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-
-    # Handle subscription sources
-    handle_subscription_sources
-
-    # Update PCI device information
-    echo -e "Attempting to resolve the issue of some PCIe devices not displaying names under PVE......"
-    update-pciids
-
-    # Restart service
-    echo -e "PVE hardware summary information added, restarting pveproxy service......"
-    systemctl restart pveproxy
-
-    echo -e "pveproxy service restart completed, please use Shift + F5 to manually refresh the PVE Web page."
-}
-
 # Execute main program
 main
 			
