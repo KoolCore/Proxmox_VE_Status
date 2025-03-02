@@ -1012,31 +1012,6 @@ systemctl restart pveproxy
 echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
 
 # 应用配置更改
-apply_configuration_changes
-
-while true; do
-    # 获取硬盘通电时间
-    disk_power_on_hours=""
-    for disk in $(ls /dev/sd[a-z]); do
-        if smartctl -A $disk | grep -q "Power_On_Hours"; then
-            hours=$(smartctl -A $disk | grep "Power_On_Hours" | awk '{print $10}')
-            disk_name=$(basename $disk)
-            disk_power_on_hours="${disk_power_on_hours}${disk_name}: ${hours}小时\n"
-        fi
-    done
-
-    # 清屏并显示系统信息
-    clear
-    echo -e "\033[32m系统信息:\033[0m"
-    # ... 其余显示逻辑保持不变 ...
-    echo -e "\033[36m硬盘通电时间:\033[0m"
-    echo -e "$disk_power_on_hours"
-    
-    sleep $update_interval
-done
-}
-
-# 应用配置更改
 apply_configuration_changes() {
     # 修改信息框 Web UI 高度
     sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
