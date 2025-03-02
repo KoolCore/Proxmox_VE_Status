@@ -1000,31 +1000,6 @@ systemctl restart pveproxy
 echo -e "pveproxy service restart completed, please use Shift + F5 to manually refresh the PVE Web page."
 
 # Apply configuration changes
-apply_configuration_changes
-
-while true; do
-    # Get disk power-on time
-    disk_power_on_hours=""
-    for disk in $(ls /dev/sd[a-z]); do
-        if smartctl -A $disk | grep -q "Power_On_Hours"; then
-            hours=$(smartctl -A $disk | grep "Power_On_Hours" | awk '{print $10}')
-            disk_name=$(basename $disk)
-            disk_power_on_hours="${disk_power_on_hours}${disk_name}: ${hours} hours\n"
-        fi
-    done
-
-    # Clear screen and display system information
-    clear
-    echo -e "\033[32mSystem Information:\033[0m"
-    # ... rest of display logic remains unchanged ...
-    echo -e "\033[36mDisk Power-On Time:\033[0m"
-    echo -e "$disk_power_on_hours"
-    
-    sleep $update_interval
-done
-}
-
-# Apply configuration changes
 apply_configuration_changes() {
     # Modify info box Web UI height
     sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
