@@ -1011,5 +1011,62 @@ systemctl restart pveproxy
 
 echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
 
+# 主要执行流程
+main() {
+    # 检查并安装必需的工具包
+    install_required_packages
+    
+    # 配置内核模块
+    configure_kernel_modules
+    
+    # 安装IT87驱动
+    install_it87_driver
+    
+    # 设置工具权限
+    set_tool_permissions
+    
+    # 检测CPU平台
+    detect_cpu_platform
+    
+    # 配置 PVE 软件源
+    echo "检查确认 PVE 软件源是否正确..."
+    if grep -q "pve-enterprise" /etc/apt/sources.list.d/pve-enterprise.list 2>/dev/null; then
+        echo "禁用企业源 enterprise repository..."
+        echo "#deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise" > /etc/apt/sources.list.d/pve-enterprise.list
+    fi
+    
+    echo "添加非订阅源 no-subscription repository..."
+    echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-no-subscription.list
+    
+    # 更新并安装必要组件
+    echo "更新软件源列表..."
+    apt update
+    
+    # 安装 pve-headers
+    echo "安装 pve-headers..."
+    if ! apt install -y pve-headers-$(uname -r); then
+        echo "未成功找到 pve-headers, 检查 PVE 版本..."
+        pveversion -v || echo "Proxmox VE 可能未安装成功."
+        
+        echo "检查标准的 Linux headers..."
+        if ! dpkg -l | grep -q "pve-headers"; then
+            echo "正在安装 linux-headers..."
+            apt install -y linux-headers-$(uname -r)
+        fi
+    fi
+    
+    echo "PVE headers 依赖安装成功."
+    
+    # 更新 PCI 设备数据库
+    echo "尝试解决PVE下部分PCIe设备不显示名称的问题......"
+    update-pciids
+    
+    # 重启 pveproxy 服务
+    echo "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ......"
+    systemctl restart pveproxy
+    
+    echo "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
+}
+
 # 执行主程序
 main
