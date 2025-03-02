@@ -27,7 +27,7 @@ cd Proxmox_VE_Status
 
 5. Run the script:
 ```
-bash ./Proxmox_VE_Status_en.sh
+bash ./pve.sh
 ```
 
 6. Run the passthrough script:
@@ -76,7 +76,7 @@ cd Proxmox_VE_Status
 
 5. 执行脚本
 ```
-bash ./Proxmox_VE_Status_zh.sh
+bash ./pve.sh
 ```
 
 6. 执行硬件直通脚本：
