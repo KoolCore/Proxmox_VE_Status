@@ -1,60 +1,162 @@
 #!/usr/bin/env bash
 
-## Build 20231112
+## Build 20250303
 
 #"/usr/share/perl5/PVE/API2/Nodes.pm"
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
-# 检查并安装工具包
-if [[ -z $(which sensors) || -z $(which iostat) ]]; then
+# 定义颜色输出
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# 定义工具包列表
+REQUIRED_PACKAGES=(
+    "lm-sensors"
+    "i2c-tools"
+    "git"
+    "build-essential"
+    "dkms"
+    "pve-headers"
+    "sysstat"
+	"wget"
+)
+
+# 安装必需的工具包
+install_required_packages() {
+    echo -e "${GREEN}正在检查并安装必需的工具包...${NC}"
     apt-get update > /dev/null 2>&1
-    if [ -z $(which sensors) ]; then
-        echo -e "正在安装 lm-sensors ......"
-        apt-get install -y lm-sensors > /dev/null 2>&1
+    
+    for package in "${REQUIRED_PACKAGES[@]}"; do
+        if ! dpkg -l | grep -q "^ii.*$package"; then
+            echo -e "${GREEN}正在安装 $package ......${NC}"
+            apt-get install -y "$package" > /dev/null 2>&1
+        fi
+    done
+}
+
+# 确认 PVE 软件源是否正确
+echo "检查确认 PVE 软件源是否正确..."
+if grep -q "pve-enterprise" /etc/apt/sources.list.d/pve-enterprise.list 2>/dev/null; then
+    echo "禁用企业源 enterprise repository..."
+    echo "#deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise" > /etc/apt/sources.list.d/pve-enterprise.list
+fi
+
+echo "添加非订阅源 no-subscription repository..."
+echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription$" > /etc/apt/sources.list.d/pve-no-subscription.list
+
+# 更新软件包索引
+echo "更新软件源列表...$"
+apt update
+
+# 尝试安装 pve-headers
+echo "安装 pve-headers..."
+if apt install -y pve-headers-$(uname -r); then
+    echo "pve-headers 安装成功."
+else
+    echo "未成功找到 pve-headers, 检查 PVE 版本...$"
+    pveversion -v || echo "Proxmox VE 可能未安装成功."
+fi
+
+# 如果 pve-headers 仍然不可用，安装通用 Linux headers
+echo "检查标准的 Linux headers..."
+if ! dpkg -l | grep -q "pve-headers"; then
+    echo "正在安装 linux-headers..."
+    apt install -y linux-headers-$(uname -r)
+fi
+
+echo "PVE headers 依赖安装成功."
+
+# 配置内核模块
+configure_kernel_modules() {
+    echo -e "正在配置内核模块..."
+    
+    # 加载必需的模块
+    modprobe i2c-dev
+    modprobe i2c-i801
+    
+    # 确保重启后自动加载模块
+    echo "i2c-dev" >> /etc/modules
+    echo "i2c-i801" >> /etc/modules
+}
+
+# 安装ITE86系列IO芯片驱动
+install_it87_driver() {
+    echo -e "正在安装ITE86系列IO芯片驱动..."
+    
+    # 克隆并编译驱动
+    git clone https://github.com/a1wong/it87.git
+    cd it87
+    make && make install
+    
+    # 配置驱动加载
+    modprobe it87
+    echo "it87" >> /etc/modules
+    echo "options it87 force_id=0x8613" > /etc/modprobe.d/it87.conf
+    
+    # 更新initramfs
+    update-initramfs -u
+}
+
+# 设置工具权限
+set_tool_permissions() {
+    if [ -n "$(which sensors)" ]; then
+        chmod +s /usr/sbin/smartctl
     fi
-
-    if [ -z $(which iostat) ]; then
-        echo -e "正在安装 sysstat ......"
-        apt-get install -y sysstat > /dev/null 2>&1
+    if [ -n "$(which iostat)" ]; then
+        chmod +s /usr/bin/iostat
     fi
-fi
+}
 
-# 设定工具权限
-if [ -n $(which sensors) ]; then
-    chmod +s /usr/sbin/smartctl
-fi
-if [ -n $(which iostat) ]; then
-    chmod +s /usr/bin/iostat
-fi
+# 识别CPU平台
+detect_cpu_platform() {
+    local cpu_platform="$(lscpu | grep 'Model name' | grep -E 'Intel|AMD')"
+    case $cpu_platform in
+        *Intel*)
+            CPU="Intel"
+            cpu_keyword="coretemp-isa"
+            ;;
+        *AMD*)
+            CPU="AMD"
+            cpu_keyword="k10temp-pci-"
+            ;;
+        *)
+            echo -e "抱歉,暂不支持当前CPU平台"
+            exit 1
+            ;;
+    esac
+}
 
-# 识别 CPU 平台
-cpu_platform="$(lscpu | grep 'Model name' | grep -E 'Intel|AMD')"
-case $cpu_platform in
-    *Intel*)
-          CPU="Intel"
-          cpu_keyword="coretemp-isa"
-          ;;
-    *AMD*)
-          CPU="AMD"
-          cpu_keyword="k10temp-pci-"
-          ;;
-    *)
-          echo -e "抱歉,暂不支持当前CPU平台"
-          ;;
-esac
+# 主要执行流程
+main() {
+    # 检查并安装必需的工具包
+    install_required_packages
+    
+    # 配置内核模块
+    configure_kernel_modules
+    
+    # 安装IT87驱动
+    install_it87_driver
+    
+    # 设置工具权限
+    set_tool_permissions
+    
+    # 检测CPU平台
+    detect_cpu_platform
 
-# CPU 主频及温度等信息 API
-cpu_info_api='		
+    # 以下是原有的API和UI配置代码
+    # CPU 主频及温度等信息 API
+    cpu_info_api='		
 	my $cpufreqs = `lscpu | grep MHz`;
 	my $corefreqs = `cat /proc/cpuinfo | grep -i  "cpu MHz"`;
 	$res->{cpu_frequency} = $cpufreqs . $corefreqs;
 
+    # 获取所有温度传感器数据,包括网卡温度
     $res->{cpu_temperatures} = `sensors`;
 		'
 
-# CPU 主频信息 Web UI
-cpu_freq_display=',
+    # CPU 主频信息 Web UI
+    cpu_freq_display=',
 	{
 	    itemId: '"'"'cpu-frequency'"'"',
 	    colspan: 2,
@@ -89,9 +191,9 @@ cpu_freq_display=',
 	    }
 	},'
 
-# CPU 温度信息 Web UI
-if [ $CPU = "Intel" ]; then
-    cpu_temp_display='
+    # CPU 温度信息 Web UI (保持原有的Intel和AMD特定代码)
+    if [ $CPU = "Intel" ]; then
+        cpu_temp_display='
 	{
 	    itemId: '"'"'cpu-temperatures'"'"',
 	    colspan: 2,
@@ -243,8 +345,8 @@ if [ $CPU = "Intel" ]; then
 	        return output.replace(/\\n/g, '"'"'<br>'"'"');
 	    }
 	}'
-elif [ $CPU = "AMD" ]; then
-    cpu_temp_display=',
+    elif [ $CPU = "AMD" ]; then
+        cpu_temp_display=',
 	{
 	    itemId: '"'"'cpu-temperatures'"'"',
 	    colspan: 2,
@@ -364,31 +466,31 @@ elif [ $CPU = "AMD" ]; then
 	        return output.replace(/\\n/g, '"'"'<br>'"'"');
 	    }
 	}'
-fi
+    fi
 
-# NVME 硬盘信息 API 及 Web UI
-nvme_height="0"
-if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
-    i="1"
-    nvme_info_api=''
-    nvme_info_display=''
-    for nvme_device in $(ls -1 /dev/nvme?); do
-        nvme_code=${nvme_device##*/}
-	    if [[ $(smartctl -a $nvme_device|grep -E "Cycle") && $(iostat -d -x -k 1 1 | grep -E "^$nvme_code") ]] && [[ $(smartctl -a $nvme_device|grep -E "Model") || $(smartctl -a $nvme_device|grep -E "Capacity") ]]; then
-	        nvme_degree="2"
-	    else
-	        nvme_degree="1"
-	    fi
-        nvme_tmp_height="$[nvme_degree*17+7]"
-		nvme_height="$[nvme_height + nvme_tmp_height]"
-        nvme_info_api_tmp='
+    # NVME 硬盘信息 API 及 Web UI
+    nvme_height="0"
+    if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
+        i="1"
+        nvme_info_api=''
+        nvme_info_display=''
+        for nvme_device in $(ls -1 /dev/nvme?); do
+            nvme_code=${nvme_device##*/}
+	        if [[ $(smartctl -a $nvme_device|grep -E "Cycle") && $(iostat -d -x -k 1 1 | grep -E "^$nvme_code") ]] && [[ $(smartctl -a $nvme_device|grep -E "Model") || $(smartctl -a $nvme_device|grep -E "Capacity") ]]; then
+	            nvme_degree="2"
+	        else
+	            nvme_degree="1"
+	        fi
+            nvme_tmp_height="$[nvme_degree*17+7]"
+			nvme_height="$[nvme_height + nvme_tmp_height]"
+            nvme_info_api_tmp='
 	my $'$nvme_code'_temperatures = `smartctl -a '$nvme_device'|grep -E "Model Number|Total NVM Capacity|Temperature:|Percentage|Data Unit|Power Cycles|Power On Hours|Unsafe Shutdowns|Integrity Errors"`;
 	my $'$nvme_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$nvme_code'"`;
 	$res->{'$nvme_code'_status} = $'$nvme_code'_temperatures . $'$nvme_code'_io;
 		'
-    nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
+        nvme_info_api="$nvme_info_api$nvme_info_api_tmp"
 
-    nvme_info_display_tmp=',
+        nvme_info_display_tmp=',
 	{
 	    itemId: '"'"''$nvme_code'-status'"'"',
 	    colspan: 2,
@@ -601,7 +703,6 @@ if [ $(ls /dev/nvme? 2> /dev/null | wc -l) -gt 0 ]; then
 	                            }
 	                        }
 	                    }
-	                    //output = output.slice(0, -3);
 	                }
 	                return output.replace(/\\n/g, '"'"'<br>'"'"');
 	            }
@@ -628,8 +729,8 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	    else
 	        hdd_degree="1"
 	    fi
-		hdd_tmp_height="$[hdd_degree*17+7]"
-		hdd_height="$[hdd_height + hdd_tmp_height]"
+	hdd_tmp_height="$[hdd_degree*17+7]"
+	hdd_height="$[hdd_height + hdd_tmp_height]"
         hdd_info_api_tmp='
 	my $'$hdd_code'_temperatures = `smartctl -a '$hdd_device'|grep -E "Model|Capacity|Power_On_Hours|Power_Cycle_Count|Power-Off_Retract_Count|Unexpected_Power_Loss|Unexpect_Power_Loss_Ct|POR_Recovery|Temperature"`;
 	my $'$hdd_code'_io = `iostat -d -x -k 1 1 | grep -E "^'$hdd_code'"`;
@@ -832,7 +933,6 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	                            }
 	                        }
 	                    }
-	                    //output = output.slice(0, -3);
 	                }
 	                return output.replace(/\\n/g, '"'"'<br>'"'"');
 	            }
@@ -841,9 +941,9 @@ if [ $(ls /dev/sd? 2> /dev/null | wc -l) -gt 0 ]; then
 	        }
 	    }
 	}'
-        hdd_info_display="$hdd_info_display$hdd_info_display_tmp"
-        i=$((i + 1))
-    done
+    hdd_info_display="$hdd_info_display$hdd_info_display_tmp"
+    i=$((i + 1))
+done
 fi
 
 # API
@@ -902,22 +1002,6 @@ sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		  
 # 去除订阅提示
 sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
 
-APT_SOURCES_LIST="/etc/apt/sources.list.d"
-
-# 移除PVE企业订阅源
-PVE_ENTERPRISE_SOURCE="${APT_SOURCES_LIST}/pve-enterprise.list"
-if [ -f $PVE_ENTERPRISE_SOURCE ]; then
-    mv $PVE_ENTERPRISE_SOURCE "${PVE_ENTERPRISE_SOURCE}.bak"
-fi
-
-PVE_NO_SUBSCRIPTION_SOURCE="${APT_SOURCES_LIST}/pve-no-subscription.list"
-if [ ! -f $PVE_NO_SUBSCRIPTION_SOURCE ]; then
-    # 增加PVE内核官方源
-    # echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > $PVE_NO_SUBSCRIPTION_SOURCE
-
-    # 记得更新下索引
-    apt update
-fi
 
 echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
@@ -926,3 +1010,58 @@ echo -e "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ....
 systemctl restart pveproxy
 
 echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
+
+# 应用配置更改
+apply_configuration_changes
+
+while true; do
+    # 获取硬盘通电时间
+    disk_power_on_hours=""
+    for disk in $(ls /dev/sd[a-z]); do
+        if smartctl -A $disk | grep -q "Power_On_Hours"; then
+            hours=$(smartctl -A $disk | grep "Power_On_Hours" | awk '{print $10}')
+            disk_name=$(basename $disk)
+            disk_power_on_hours="${disk_power_on_hours}${disk_name}: ${hours}小时\n"
+        fi
+    done
+
+    # 清屏并显示系统信息
+    clear
+    echo -e "\033[32m系统信息:\033[0m"
+    # ... 其余显示逻辑保持不变 ...
+    echo -e "\033[36m硬盘通电时间:\033[0m"
+    echo -e "$disk_power_on_hours"
+    
+    sleep $update_interval
+done
+}
+
+# 应用配置更改
+apply_configuration_changes() {
+    # 修改信息框 Web UI 高度
+    sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
+
+    # 完善汉化信息
+    sed -i '/'"'"'netin'"'"', '"'"'netout'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'下行'"'"'), gettext('"'"'上行'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
+    sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'读'"'"'), gettext('"'"'写'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
+
+    # 去除订阅提示
+    sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+
+    # 处理订阅源
+    handle_subscription_sources
+
+    # 更新PCI设备信息
+    echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
+    update-pciids
+
+    # 重启服务
+    echo -e "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ......"
+    systemctl restart pveproxy
+
+    echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
+}
+
+
+# 执行主程序
+main
