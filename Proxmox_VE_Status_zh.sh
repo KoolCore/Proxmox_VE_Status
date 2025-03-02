@@ -1011,32 +1011,5 @@ systemctl restart pveproxy
 
 echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
 
-# 应用配置更改
-apply_configuration_changes() {
-    # 修改信息框 Web UI 高度
-    sed -i '/widget.pveNodeStatus/,/},/ s/height: [0-9]\+/height: '$height2'/; /width: '"'"'100%'"'"'/{n;s/ 	    },/		textAlign: '"'"'right'"'"',\n&/}' /usr/share/pve-manager/js/pvemanagerlib.js
-
-    # 完善汉化信息
-    sed -i '/'"'"'netin'"'"', '"'"'netout'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'下行'"'"'), gettext('"'"'上行'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
-    sed -i '/'"'"'diskread'"'"', '"'"'diskwrite'"'"'/{n;s/		    store: rrdstore/		    fieldTitles: [gettext('"'"'读'"'"'), gettext('"'"'写'"'"')],	\n&/g}' /usr/share/pve-manager/js/pvemanagerlib.js
-
-    # 去除订阅提示
-    sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-
-    # 处理订阅源
-    handle_subscription_sources
-
-    # 更新PCI设备信息
-    echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
-    update-pciids
-
-    # 重启服务
-    echo -e "添加 PVE 硬件概要信息完成，正在重启 pveproxy 服务 ......"
-    systemctl restart pveproxy
-
-    echo -e "pveproxy 服务重启完成，请使用 Shift + F5 手动刷新 PVE Web 页面。"
-}
-
-
 # 执行主程序
 main
