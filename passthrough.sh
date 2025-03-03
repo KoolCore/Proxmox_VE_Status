@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#运行代码前更新软件包
-apt update && apt install -y
+echo "更新软件源列表...$"
+apt update && apt full-upgrade -y
 
 # 获取 CPU 信息
 cpu_vendor=$(lscpu | grep "Vendor ID" | awk '{print $3}')
