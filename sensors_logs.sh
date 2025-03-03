@@ -2,6 +2,26 @@
 
 set -e
 
+# 设置间隔时间（秒）
+INTERVAL=1
+
+# 检查并安装必要的软件包
+check_and_install_package() {
+    local package_name=$1
+    if ! dpkg -l | grep -q "$package_name"; then
+        echo "$package_name 未安装，正在安装..."
+        sudo apt-get update
+        sudo apt-get install -y "$package_name"
+    else
+        echo "$package_name 已安装"
+    fi
+}
+
+# 检查并安装 cpupower 和 lm-sensors
+check_and_install_package "cpupower"
+check_and_install_package "lm-sensors"
+check_and_install_package "linux-cpupower"
+
 counter=0
 log_file="sensors_log.txt"
 
@@ -14,6 +34,37 @@ cpu_info=$(grep "model name" /proc/cpuinfo | head -n1 | cut -d':' -f2-)
 read -r cpu user nice system idle iowait irq softirq steal guest < /proc/stat
 prev_idle=$idle
 prev_total=$((user + nice + system + idle + iowait + irq + softirq + steal))
+
+# 获取处理器功耗
+get_processor_power() {
+    # 获取初始功耗（单位：微焦耳）
+    energy_uj_start=$(cat /sys/class/powercap/intel-rapl:0/energy_uj)
+
+    # 等待一段时间（间隔）
+    sleep $INTERVAL
+
+    # 获取第二次功耗（单位：微焦耳）
+    energy_uj_end=$(cat /sys/class/powercap/intel-rapl:0/energy_uj)
+
+    # 计算功耗差值（单位：微焦耳）
+    energy_diff=$((energy_uj_end - energy_uj_start))
+
+    # 转换为瓦特（功耗单位为瓦特，1瓦特 = 1焦耳/秒）
+    power_W=$(echo "scale=4; $energy_diff / 1000000" | bc)
+
+    echo "$power_W W"
+}
+
+# 获取处理器功耗
+get_intel_power() {
+    if [ -d /sys/class/powercap/intel-rapl ]; then
+        # 获取处理器功耗
+        power=$(get_processor_power)
+        echo "$power"
+    else
+        echo "无法获取功耗数据（Intel RAPL）"
+    fi
+}
 
 while true; do
     clear
@@ -56,6 +107,9 @@ while true; do
     # 获取处理器实时频率
     cpu_freq=$(grep "cpu MHz" /proc/cpuinfo | awk '{printf "%.2fMHz ", $4}')
     
+    # 获取处理器功耗（Intel RAPL）
+    power=$(get_intel_power)
+    
     # 在屏幕上显示结果
     echo "第 $counter 秒测试结果，时间：$timestamp (开机时长: $uptime_info)"
     echo "=============================================="
@@ -63,9 +117,11 @@ while true; do
     echo "内核版本: $kernel_version"
     echo "CPU信息: $cpu_info"
     echo "----------------------------------------------"
-    echo "处理器实时频率: $cpu_freq"
+    echo "处理器实时频率: $cpu_freq  "
     echo "----------------------------------------------"
-    echo "处理器实时负载: $cpu_usage%"
+    echo "处理器实时负载: $cpu_usage%  "
+    echo "----------------------------------------------"
+    echo "处理器功耗: $power"
     echo "----------------------------------------------"
     echo "处理器核心温度:"
     echo "$proc_temps"
@@ -82,9 +138,10 @@ while true; do
         echo "内核版本: $kernel_version"
         echo "CPU信息: $cpu_info"
         echo "----------------------------------------------"
-        echo "处理器实时频率: $cpu_freq"
+        echo "处理器实时频率: $cpu_freq  "
+        echo "处理器实时负载: $cpu_usage%  "
         echo "----------------------------------------------"
-        echo "处理器实时负载: $cpu_usage%"
+        echo "处理器功耗: $power"
         echo "----------------------------------------------"
         echo "处理器核心温度:"
         echo "$proc_temps"
@@ -95,5 +152,5 @@ while true; do
         echo ""
     } >> "$log_file"
     
-    sleep 1
+    sleep $INTERVAL
 done
