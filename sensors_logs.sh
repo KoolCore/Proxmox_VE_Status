@@ -67,7 +67,7 @@ get_intel_power() {
 }
 
 while true; do
-    clear
+    # 每次输出结果前，保持之前的输出并覆盖更新部分
     counter=$((counter + 1))
     timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
@@ -109,8 +109,9 @@ while true; do
     
     # 获取处理器功耗（Intel RAPL）
     power=$(get_intel_power)
-    
-    # 在屏幕上显示结果
+
+    # 使用光标控制进行局部更新，避免闪烁
+    echo -e "\033[H\033[J"  # 清空终端屏幕并将光标移动到最上面
     echo "第 $counter 秒测试结果，时间：$timestamp (开机时长: $uptime_info)"
     echo "=============================================="
     echo "操作系统版本: $os_version"
