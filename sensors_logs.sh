@@ -5,22 +5,10 @@ set -e
 # 设置间隔时间（秒）
 INTERVAL=1
 
-# 检查并安装必要的软件包
-check_and_install_package() {
-    local package_name=$1
-    if ! dpkg -l | grep -q "$package_name"; then
-        echo "$package_name 未安装，正在安装..."
-        sudo apt-get update
-        sudo apt-get install -y "$package_name"
-    else
-        echo "$package_name 已安装"
-    fi
-}
-
-# 检查并安装 cpupower 和 lm-sensors
-check_and_install_package "cpupower"
-check_and_install_package "lm-sensors"
-check_and_install_package "linux-cpupower"
+# 安装必要的软件包
+sudo apt update -y
+sudo apt full-upgrade -y
+apt install -y lm-sensors linux-cpupower 
 
 counter=0
 log_file="sensors_log.txt"
