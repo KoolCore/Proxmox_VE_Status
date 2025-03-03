@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# 检查是否以 root 身份运行
-if [[ $EUID -ne 0 ]]; then
-    echo "请以 root 权限运行此脚本。"
-    exit 1
-fi
+#运行代码前更新软件包
+apt update && apt install -y
 
 # 获取 CPU 信息
 cpu_vendor=$(lscpu | grep "Vendor ID" | awk '{print $3}')
@@ -36,14 +33,6 @@ modules=(vfio vfio_iommu_type1 vfio_pci vfio_virqfd)
 for module in "${modules[@]}"; do
     if ! grep -q "^$module" /etc/modules; then
         echo "$module" >> /etc/modules
-    fi
-done
-
-echo "正在加载内核模块..."
-for module in "${modules[@]}"; do
-    if ! modprobe "$module"; then
-        echo "加载模块 $module 失败，请检查系统日志。"
-        exit 1
     fi
 done
 
