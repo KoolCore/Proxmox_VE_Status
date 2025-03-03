@@ -6,6 +6,13 @@
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
+#开始运行代码之前，更新当前PVE软件包
+export LC_ALL=en_US.UTF-8
+apt update && apt upgrade -y
+
+#安装git和wget
+apt install git wget 
+
 # 定义颜色输出
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -14,12 +21,10 @@ NC='\033[0m' # No Color
 REQUIRED_PACKAGES=(
     "lm-sensors"
     "i2c-tools"
-    "git"
     "build-essential"
     "dkms"
     "pve-headers"
     "sysstat"
-	"wget"
 )
 
 # 安装必需的工具包
