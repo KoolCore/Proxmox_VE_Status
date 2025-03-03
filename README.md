@@ -48,3 +48,11 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh)"
 ```
+
+
+
+<hr>
+
+#### 致谢：
+- https://community-scripts.github.io/ProxmoxVE/
+- https://github.com/community-scripts/ProxmoxVE
