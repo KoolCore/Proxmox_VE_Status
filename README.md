@@ -5,7 +5,7 @@
 
 > 注意:以下代码需要PVE宿主机能流畅访问Github，否则你会遇到各种问题；以下代码推荐在Proxmox VE网页后台的Shell下运行。
 
-#### 修改PVE状态栏
+#### 修改 PVE 信息栏
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/pve.sh)"
 ```
@@ -20,7 +20,7 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 完成后，PVE 宿主机会自动重启，请耐心等待1~3分钟再通过网页从新进入PVE后台
 
 
-#### 还原状态栏：
+#### 还原默认信息栏：
 
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/restore.sh)"
