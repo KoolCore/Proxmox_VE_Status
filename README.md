@@ -31,3 +31,11 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/openwrt.sh)"
 ```
 固件为自托管在dl.ikoolcore.com，针对R2 Max适配万兆 AQC113C-B1-C 网卡。理论上 X86 所有设备通用。
+
+
+#### 其他工具代码（自用性质）
+
+##### 性能测试时，处理器温度，负载，功耗，网卡温度等性能监控工具
+```
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh)"
+```
