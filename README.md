@@ -15,13 +15,19 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/passthrough.sh)"
 ```
-
+完成后，PVE 宿主机会自动重启，请耐心等待1~3分钟再通过网页从新进入PVE后台
 
 
 #### 还原状态栏：
 
-运行以下四条命令（适用于已经改过概要信息，还原成默认的概要信息）：
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/restore.sh)"
 ```
 
+#### 虚拟机
+
+##### 安装 OpenWrt 虚拟机
+```
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/openwrt.sh)"
+```
+固件为自托管在dl.ikoolcore.com，针对R2 Max适配万兆 AQC113C-B1-C 网卡。理论上 X86 所有设备通用。
