@@ -6,71 +6,16 @@
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
-#开始运行代码之前，更新当前PVE软件包
 export LC_ALL=en_US.UTF-8
-apt update && apt upgrade -y
 
-#安装git和wget
-apt install git wget 
+#pve headers安装的前提需要此软件源
+echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
+apt update  && apt full-upgrade -y
+apt install git && apt install wget && apt install lm-sensors && apt install i2c-tools && apt install build-essential && apt install dkms && apt install sysstat && apt install proxmox-headers-$(uname -r) -y
 
-# 定义颜色输出
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-
-# 定义工具包列表
-REQUIRED_PACKAGES=(
-    "lm-sensors"
-    "i2c-tools"
-    "build-essential"
-    "dkms"
-    "pve-headers"
-    "sysstat"
-)
-
-# 安装必需的工具包
-install_required_packages() {
-    echo -e "${GREEN}正在检查并安装必需的工具包...${NC}"
-    apt-get update > /dev/null 2>&1
-    
-    for package in "${REQUIRED_PACKAGES[@]}"; do
-        if ! dpkg -l | grep -q "^ii.*$package"; then
-            echo -e "${GREEN}正在安装 $package ......${NC}"
-            apt-get install -y "$package" > /dev/null 2>&1
-        fi
-    done
-}
-
-# 确认 PVE 软件源是否正确
-echo "检查确认 PVE 软件源是否正确..."
-if grep -q "pve-enterprise" /etc/apt/sources.list.d/pve-enterprise.list 2>/dev/null; then
-    echo "禁用企业源 enterprise repository..."
-    echo "#deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise" > /etc/apt/sources.list.d/pve-enterprise.list
-fi
-
-echo "添加非订阅源 no-subscription repository..."
-echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription$" > /etc/apt/sources.list.d/pve-no-subscription.list
-
-# 更新软件包索引
+# 更新软件源后，再次进行软件包索引与更新
 echo "更新软件源列表...$"
-apt update
-
-# 尝试安装 pve-headers
-echo "安装 pve-headers..."
-if apt install -y pve-headers-$(uname -r); then
-    echo "pve-headers 安装成功."
-else
-    echo "未成功找到 pve-headers, 检查 PVE 版本...$"
-    pveversion -v || echo "Proxmox VE 可能未安装成功."
-fi
-
-# 如果 pve-headers 仍然不可用，安装通用 Linux headers
-echo "检查标准的 Linux headers..."
-if ! dpkg -l | grep -q "pve-headers"; then
-    echo "正在安装 linux-headers..."
-    apt install -y linux-headers-$(uname -r)
-fi
-
-echo "PVE headers 依赖安装成功."
+apt update && apt full-upgrade -y
 
 # 配置内核模块
 configure_kernel_modules() {
