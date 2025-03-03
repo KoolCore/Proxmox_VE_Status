@@ -1,4 +1,4 @@
-![](https://github.com/KoolCore/Proxmox_VE_Status/blob/main/Proxmox_VE_Status.png)
+![](https://github.com/KoolCore/Proxmox_VE_Status/blob/main/pve_status.png)
 
 #### Installation
 > Note: You need to run the following codes as root. The codes below are run in the Shell of Proxmox VE web UI (root user by default).
