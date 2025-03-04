@@ -1,10 +1,11 @@
 ![](https://github.com/KoolCore/Proxmox_VE_Status/blob/main/pve_status.png)
 
 
-
+<hr>
 
 > 注意:以下代码需要PVE宿主机能流畅访问Github，否则你会遇到各种问题；以下代码推荐在Proxmox VE网页后台的Shell下运行。
 
+### 主要功能介绍：
 #### 修改 PVE 信息栏
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/pve.sh)"
@@ -25,8 +26,10 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/restore.sh)"
 ```
+<hr>
 
-#### 虚拟机
+### 虚拟机快捷安装
+
 
 ##### 安装 OpenWrt 虚拟机
 ```
