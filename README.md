@@ -11,8 +11,8 @@
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/pve.sh)"
 ```
 ***如果发现 `curl: (7) Failed to connect to raw.githubusercontent.com port 443: Connection refused` 这种错误，年轻人，你的网络运营商屏蔽了 GitHub。请自行处理网络环境问题。***
-大概1-3分钟后，按下`CTRL+F5`强制刷新本页面即可。
-代码运行过程会执行软件包更新，可能需要你多次输入`y`以继续执行代码，请保持关注代码执行过程。
+大概1-3分钟后，按下`CTRL+F5`强制刷新本页面即可。</br>
+代码运行过程会执行软件包更新，可能需要你多次输入`y`以继续执行代码，请保持关注代码执行过程。</br>部分非ITE86,ITE87系列的Super IO芯片的设备，将读取不到风扇转速，目前代码仅支持ITE86/87系列IO芯片的设备读取风扇转速
 
 #### 2.开启硬件直通：
 ```
