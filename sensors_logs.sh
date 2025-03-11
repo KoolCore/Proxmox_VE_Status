@@ -151,7 +151,7 @@ while true; do
     echo "处理器实时频率: $cpu_freq"
     echo "处理器实时负载: $cpu_usage%"
     echo "----------------------------------------------"
-    echo "处理器功耗: $power"
+    echo "处理器实时功耗: $power"
     echo "----------------------------------------------"
     echo "处理器核心温度:"
     echo "$proc_temps"
