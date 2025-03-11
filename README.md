@@ -28,30 +28,20 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 ```
 <hr>
 
-### 虚拟机快捷安装
-
-
-##### 1.安装 OpenWrt 虚拟机
-```
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/openwrt.sh)"
-```
-固件为自托管在dl.ikoolcore.com，针对R2 Max适配万兆 AQC113C-B1-C 网卡。理论上 X86 所有设备通用。
-
-##### 2.安装 Debian 12 虚拟机
-```
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/debian.sh)"
-```
-
-
-<ht>
-
 ### 其他工具代码（自用性质）
 
 ##### 1.性能测试时，处理器温度，负载，功耗，网卡温度等性能监控工具
-```
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh)"
+
+
 ```
 
+wget https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh
+
+chmod +x sensors_logs.sh
+
+bash ./sensors_logs.sh
+
+```
 
 
 <hr>
