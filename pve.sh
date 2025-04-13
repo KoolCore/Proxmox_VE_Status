@@ -31,8 +31,8 @@ configure_kernel_modules() {
     modprobe i2c-i801
     
     # 确保重启后自动加载模块
-    echo "i2c-dev" >> /etc/modules
-    echo "i2c-i801" >> /etc/modules
+grep -qxF "i2c-dev" /etc/modules || echo "i2c-dev" >> /etc/modules
+grep -qxF "i2c-i801" /etc/modules || echo "i2c-i801" >> /etc/modules
 }
 
 # 安装ITE86系列IO芯片驱动
