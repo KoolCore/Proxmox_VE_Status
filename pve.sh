@@ -6,7 +6,7 @@
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
-set -e  # 一旦发生错误则退出脚本
+
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=en_US.UTF-8
 # 去除订阅提示
