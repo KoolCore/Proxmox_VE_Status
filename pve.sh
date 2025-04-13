@@ -6,6 +6,8 @@
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
+set -e  # 一旦发生错误则退出脚本
+export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=en_US.UTF-8
 # 去除订阅提示
 sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
@@ -13,14 +15,18 @@ sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/
 echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
-#pve headers安装的前提需要此软件源
+# 添加 PVE 无订阅源
 echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
-apt update  && apt full-upgrade -y
-apt install git && apt install wget && apt install lm-sensors && apt install i2c-tools && apt install build-essential && apt install dkms && apt install sysstat && apt install proxmox-headers-$(uname -r) -y
+
+# 更新软件包索引并自动升级所有软件
+apt update && apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
+
+# 安装所需工具，自动确认安装
+apt install -y git wget lm-sensors i2c-tools build-essential dkms sysstat "proxmox-headers-$(uname -r)"
 
 # 更新软件源后，再次进行软件包索引与更新
 echo "更新软件源列表...$"
-apt update && apt full-upgrade -y
+apt update && apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
 
 # 配置内核模块
 configure_kernel_modules() {
