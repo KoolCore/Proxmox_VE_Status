@@ -49,3 +49,4 @@ bash ./sensors_logs.sh
 #### 致谢：
 - https://community-scripts.github.io/ProxmoxVE/
 - https://github.com/community-scripts/ProxmoxVE
+- ITE IO驱动：https://github.com/a1wong/it87
