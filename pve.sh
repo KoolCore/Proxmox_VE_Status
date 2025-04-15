@@ -36,13 +36,6 @@ grep -qxF "i2c-dev" /etc/modules || echo "i2c-dev" >> /etc/modules
 grep -qxF "i2c-i801" /etc/modules || echo "i2c-i801" >> /etc/modules
 }
 
-# 安装ite Super IO芯片驱动前检查当前文件夹下是否存在相关目录，防止二次运行代码时报错
-if [ -d "./it87" ]; then
-  echo "检测到当前文件夹下存在 it87 文件夹，正在删除..."
-  rm -rf ./it87
-  echo "it87 文件夹已删除，代码继续执行，请耐心等待..."
-fi
-
 # 安装ITE86系列IO芯片驱动
 install_it87_driver() {
     echo -e "正在安装ITE86系列IO芯片驱动..."
