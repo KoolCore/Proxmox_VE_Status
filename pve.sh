@@ -92,8 +92,6 @@ detect_cpu_platform() {
 
 # 主要执行流程
 main() {
-    # 检查并安装必需的工具包
-    install_required_packages
     
     # 配置内核模块
     configure_kernel_modules
