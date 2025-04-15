@@ -22,6 +22,14 @@ apt install git wget lm-sensors i2c-tools build-essential dkms sysstat proxmox-h
 echo "更新软件源列表...$"
 apt update && apt full-upgrade -y
 
+# 检查当前文件夹下是否存在ITE SuperIO芯片驱动相关代码文件夹，如果存在，则删除
+if [ -d "./it87" ]; then
+  echo "检测到 it87 相关驱动文件夹，正在删除..."
+  rm -rf ./it87
+  echo "it87 文件夹已删除，代码会继续执行，请耐心等待..."
+fi
+
+
 # 配置内核模块
 configure_kernel_modules() {
     echo -e "正在配置内核模块..."
