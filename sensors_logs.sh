@@ -142,7 +142,7 @@ while true; do
 
     # 优化屏幕刷新，减少闪烁
     echo -e "\033[H\033[J"
-    echo "第 $counter 秒测试结果，时间：$timestamp (开机时长: $uptime_info)"
+    echo "第 $counter 次测试结果，时间：$timestamp (开机时长: $uptime_info)" 
     echo "=============================================="
     echo "操作系统版本: $os_version"
     echo "内核版本: $kernel_version"
@@ -151,7 +151,7 @@ while true; do
     echo "处理器实时频率: $cpu_freq"
     echo "处理器实时负载: $cpu_usage%"
     echo "----------------------------------------------"
-    echo "处理器实时功耗: $power"
+    echo "处理器功耗: $power"
     echo "----------------------------------------------"
     echo "处理器核心温度:"
     echo "$proc_temps"
