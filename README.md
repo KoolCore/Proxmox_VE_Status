@@ -35,11 +35,7 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 
 ```
 
-wget https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh
-
-chmod +x sensors_logs.sh
-
-bash ./sensors_logs.sh
+wget -q https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/sensors_logs.sh && chmod +x sensors_logs.sh && ./sensors_logs.sh
 
 ```
 
