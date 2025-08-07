@@ -19,9 +19,6 @@ update-pciids
 [ -f /etc/apt/sources.list.d/ceph.list ] && rm -f /etc/apt/sources.list.d/ceph.list
 [ -f /etc/apt/sources.list.d/pve-no-subscription.list ] && rm -f /etc/apt/sources.list.d/pve-no-subscription.list
 
-#删除重复源
-rm rf /etc/apt/sources.list.d/pve-no-subscription.list
-
 #pve headers安装的前提需要此软件源
 # 获取 PVE 主版本号（如 8.x、9.x）
 PVE_MAJOR=$(pveversion | grep -oP '^pve-manager/\K[0-9]+')
