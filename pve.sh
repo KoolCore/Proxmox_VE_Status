@@ -14,7 +14,21 @@ echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
 #pve headers安装的前提需要此软件源
-echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
+# 获取 PVE 主版本号（如 8.x、9.x）
+PVE_MAJOR=$(pveversion | grep -oP '^pve-manager/\K[0-9]+')
+
+# 判断版本号并写入对应源
+if [ "$PVE_MAJOR" -eq 9 ]; then
+  echo "Detected PVE 9 -> Using Debian 13 (trixie) source."
+  echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
+elif [ "$PVE_MAJOR" -eq 8 ]; then
+  echo "Detected PVE 8 -> Using Debian 12 (bookworm) source."
+  echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
+else
+  echo "Unsupported or unknown PVE version: $PVE_MAJOR"
+  exit 1
+fi
+
 apt update  && apt full-upgrade -y
 apt install git wget lm-sensors i2c-tools build-essential dkms sysstat proxmox-headers-$(uname -r) -y
 
