@@ -6,6 +6,28 @@
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
 #"/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 
+set -e
+
+echo "🔍 检查重复的 Proxmox 源配置..."
+
+LIST_FILE="/etc/apt/sources.list.d/pve-no-subscription.list"
+SOURCES_FILE="/etc/apt/sources.list.d/proxmox.sources"
+
+# 检查是否同时存在 .list 和 .sources 文件
+if [[ -f "$LIST_FILE" && -f "$SOURCES_FILE" ]]; then
+  echo "⚠️ 检测到重复的源配置："
+  echo " - $LIST_FILE"
+  echo " - $SOURCES_FILE"
+  echo ""
+  echo "🧹 正在删除旧的 .list 文件：$LIST_FILE"
+  rm -v "$LIST_FILE"
+  echo ""
+  echo "✅ 清理完成。现在只保留新格式源：$SOURCES_FILE"
+else
+  echo "✅ 没有发现重复配置，系统源配置正常。"
+fi
+
+
 export LC_ALL=en_US.UTF-8
 # 去除订阅提示
 sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/\1/g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
