@@ -14,10 +14,10 @@ echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
 #删除企业源，防止代码打印错误提示
-rm -rf /etc/apt/sources.list.d/pve-enterprise.sources
-rm -rf /etc/apt/sources.list.d/pve-enterprise.list
-rm -rf /etc/apt/sources.list.d/ceph.list
-rm -rf /etc/apt/sources.list.d/pve-no-subscription.list
+[ -f /etc/apt/sources.list.d/pve-enterprise.sources ] && rm -f /etc/apt/sources.list.d/pve-enterprise.sources
+[ -f /etc/apt/sources.list.d/pve-enterprise.list ] && rm -f /etc/apt/sources.list.d/pve-enterprise.list
+[ -f /etc/apt/sources.list.d/ceph.list ] && rm -f /etc/apt/sources.list.d/ceph.list
+[ -f /etc/apt/sources.list.d/pve-no-subscription.list ] && rm -f /etc/apt/sources.list.d/pve-no-subscription.list
 
 #删除重复源
 rm rf /etc/apt/sources.list.d/pve-no-subscription.list
