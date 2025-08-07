@@ -15,6 +15,7 @@ update-pciids
 
 #删除企业源，防止代码打印错误提示
 rm -rf /etc/apt/sources.list.d/pve-enterprise.sources
+rm -rf /etc/apt/sources.list.d/pve-enterprise.list
 rm -rf /etc/apt/sources.list.d/ceph.list
 
 #pve headers安装的前提需要此软件源
