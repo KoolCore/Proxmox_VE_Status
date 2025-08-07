@@ -35,37 +35,34 @@ else
   exit 1
 fi
 
-apt update  && apt full-upgrade -y
-apt install git wget lm-sensors i2c-tools build-essential dkms sysstat proxmox-headers-$(uname -r) -y
-
 # 更新软件源后，再次进行软件包索引与更新
 echo "更新软件源列表...$"
 apt update && apt full-upgrade -y
 
-# 检查当前文件夹下是否存在ITE SuperIO芯片驱动相关代码文件夹，如果存在，则删除
-if [ -d "./it87" ]; then
-  echo "检测到 it87 相关驱动文件夹，正在删除..."
-  rm -rf ./it87
-  echo "it87 文件夹已删除，代码会继续执行，请耐心等待..."
-fi
-
+apt install git wget lm-sensors i2c-tools build-essential dkms sysstat proxmox-headers-$(uname -r) -y
 
 # 配置内核模块
 configure_kernel_modules() {
-    echo -e "正在配置内核模块..."
-    
+    echo -e "正在配置内核模块..."   
     # 加载必需的模块
     modprobe i2c-dev
-    modprobe i2c-i801
-    
+    modprobe i2c-i801    
     # 确保重启后自动加载模块
-grep -qxF "i2c-dev" /etc/modules || echo "i2c-dev" >> /etc/modules
-grep -qxF "i2c-i801" /etc/modules || echo "i2c-i801" >> /etc/modules
+	grep -qxF "i2c-dev" /etc/modules || echo "i2c-dev" >> /etc/modules
+	grep -qxF "i2c-i801" /etc/modules || echo "i2c-i801" >> /etc/modules
 }
 
 # 安装ITE86系列IO芯片驱动
 install_it87_driver() {
-    echo -e "正在安装ITE86系列IO芯片驱动..."
+
+	echo -e "检查当前文件夹下是否存在ITE SuperIO芯片驱动相关代码文件夹"
+	if [ -d "./it87" ]; then
+	  echo "检测到 it87 相关驱动文件夹，正在删除..."
+	  rm -rf ./it87
+	  echo "it87 文件夹已删除，代码会继续执行，请耐心等待..."
+	fi
+ 
+    echo -e "正在重新安装ITE86系列IO芯片驱动..."
     
     # 克隆并编译驱动
     git clone https://github.com/a1wong/it87.git
