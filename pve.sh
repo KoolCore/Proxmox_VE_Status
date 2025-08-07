@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Build 20250304
+## Build 20250807
 
 #"/usr/share/perl5/PVE/API2/Nodes.pm"
 #"/usr/share/pve-manager/js/pvemanagerlib.js"
@@ -15,6 +15,7 @@ update-pciids
 
 #删除企业源，防止代码打印错误提示
 rm -rf /etc/apt/sources.list.d/pve-enterprise.sources
+rm -rf /etc/apt/sources.list.d/ceph.list
 
 #pve headers安装的前提需要此软件源
 # 获取 PVE 主版本号（如 8.x、9.x）
