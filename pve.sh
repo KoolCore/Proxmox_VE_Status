@@ -13,6 +13,9 @@ sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\/
 echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
+#删除企业源，防止代码打印错误提示
+rm -rf /etc/apt/sources.list.d/pve-enterprise.sources
+
 #pve headers安装的前提需要此软件源
 # 获取 PVE 主版本号（如 8.x、9.x）
 PVE_MAJOR=$(pveversion | grep -oP '^pve-manager/\K[0-9]+')
