@@ -26,6 +26,12 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Sta
 ```
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/restore.sh)"
 ```
+
+#### 4. 换国内源( **仅** 限PVE9)
+
+```
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/KoolCore/Proxmox_VE_Status/refs/heads/main/change_source_pve9.sh)"
+```
 <hr>
 
 ### 其他工具代码（自用性质）
