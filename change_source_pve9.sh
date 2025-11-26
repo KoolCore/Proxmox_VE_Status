@@ -2,7 +2,7 @@
 
 # ============================
 # 一键替换 PVE9 / Debian13 源
-# 支持：清华 / 中科大 / 阿里
+# 支持：清华 / 中科大 / 阿里 / 官方
 # 自动备份 + 自动检测
 # ============================
 
@@ -18,7 +18,9 @@ echo "请选择镜像源："
 echo "1) 清华"
 echo "2) 中科大"
 echo "3) 阿里"
-read -p "请输入数字 [1-3]：" choice
+echo "4) 官方源"
+echo "5) 退出"
+read -p "请输入数字 [1-5]：" choice
 
 case $choice in
     1)
@@ -32,6 +34,14 @@ case $choice in
     3)
         DEBIAN_MIRROR="http://mirrors.aliyun.com/debian/"
         PVE_MIRROR="http://mirrors.aliyun.com/proxmox/debian/pve"
+        ;;
+    4)
+        DEBIAN_MIRROR="http://deb.debian.org/debian/"
+        PVE_MIRROR="http://download.proxmox.com/debian/pve"
+        ;;
+    5)
+        echo "退出脚本。"
+        exit 0
         ;;
     *)
         echo "输入无效，退出。"
@@ -55,12 +65,22 @@ cp -r /etc/apt/sources.list.d/* /etc/apt/sources.list.d.bak/ 2>/dev/null || true
 # -----------------------------
 # 替换 Debian 13 sources.list
 # -----------------------------
-cat >/etc/apt/sources.list <<EOF
+if [ "$choice" -eq 4 ]; then
+    # 官方源
+    cat >/etc/apt/sources.list <<EOF
+deb $DEBIAN_MIRROR trixie main contrib non-free non-free-firmware
+deb $DEBIAN_MIRROR trixie-updates main contrib non-free non-free-firmware
+deb $DEBIAN_MIRROR trixie-backports main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
+EOF
+else
+    cat >/etc/apt/sources.list <<EOF
 deb $DEBIAN_MIRROR trixie main contrib non-free non-free-firmware
 deb $DEBIAN_MIRROR trixie-updates main contrib non-free non-free-firmware
 deb $DEBIAN_MIRROR trixie-backports main contrib non-free non-free-firmware
 deb ${DEBIAN_MIRROR//http:/https:}trixie-security main contrib non-free non-free-firmware
 EOF
+fi
 
 # -----------------------------
 # 替换 PVE 无订阅源
