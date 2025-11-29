@@ -14,7 +14,7 @@ echo -e "尝试解决PVE下部分PCIe设备不显示名称的问题......"
 update-pciids
 
 #删除企业源，防止代码打印错误提示
-[ -f /etc/apt/sources.list.d/pve-enterprise.sources ] && rm -f /etc/apt/sources.list.d/pve-enterprise.sources
+[ -f /etc/apt/sources.list.d/pve-enterprise.sources ] && mv -f /etc/apt/sources.list.d/pve-enterprise.sources /etc/apt/sources.list.d/pve-enterprise.sources.bak
 [ -f /etc/apt/sources.list.d/pve-enterprise.list ] && rm -f /etc/apt/sources.list.d/pve-enterprise.list
 [ -f /etc/apt/sources.list.d/ceph.list ] && rm -f /etc/apt/sources.list.d/ceph.list
 [ -f /etc/apt/sources.list.d/pve-no-subscription.list ] && rm -f /etc/apt/sources.list.d/pve-no-subscription.list
@@ -25,8 +25,14 @@ PVE_MAJOR=$(pveversion | grep -oP '^pve-manager/\K[0-9]+')
 
 # 判断版本号并写入对应源
 if [ "$PVE_MAJOR" -eq 9 ]; then
-  echo "Detected PVE 9 -> Using Debian 13 (trixie) source."
-  echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
+	echo "Detected PVE 9 -> Using Debian 13 (trixie) source."
+	cat > /etc/apt/sources.list.d/proxmox.sources <<- EOF
+	Types: deb
+	URIs: http://download.proxmox.com/debian/pve
+	Suites: trixie
+	Components: pve-no-subscription
+	Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+	EOF
 elif [ "$PVE_MAJOR" -eq 8 ]; then
   echo "Detected PVE 8 -> Using Debian 12 (bookworm) source."
   echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | tee /etc/apt/sources.list.d/pve-no-subscription.list
